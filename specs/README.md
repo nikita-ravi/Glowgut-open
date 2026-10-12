@@ -43,3 +43,4 @@ and noting why; its tests go with it.
 | [003-additives](003-additives.md) | Additive penalty (A component) | implemented |
 | [004-processing](004-processing.md) | NOVA processing (P component) | implemented |
 | [005-engine](005-engine.md) | Score combination, breakdown contract, bands | implemented |
+| [006-product-lookup](006-product-lookup.md) | `GET /products/{gtin}` and breakdown | implemented |
