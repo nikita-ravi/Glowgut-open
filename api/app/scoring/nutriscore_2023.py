@@ -196,7 +196,10 @@ def compute(
     a_points = sum(int(ln.points) for ln in unfavourable)
 
     fiber_pts = points_above(val("fiber_g"), t.fiber)
-    fvl_pts = fvl_points(val("fvl_percent"), t.fvl)
+    fvl_value, fvl_note = val("fvl_percent"), None
+    if nutri_class == "fats_oils_nuts_seeds" and set(facts.category_tags) & set(cfg.fvl_oil_tags):
+        fvl_value, fvl_note = 100.0, "Olive, rapeseed and walnut oils count as 100%."  # NS-22
+    fvl_pts = fvl_points(fvl_value, t.fvl)
     protein_pts = points_above(val("proteins_g"), t.proteins)
     protein_note = None
     if nutri_class == "general" and is_red_meat:  # NS-11
@@ -221,7 +224,7 @@ def compute(
     favourable = [
         line("proteins", -protein_pts, val("proteins_g"), est("proteins_g"), protein_note),
         line("fiber", -fiber_pts, val("fiber_g"), est("fiber_g")),
-        line("fvl", -fvl_pts, val("fvl_percent"), est("fvl_percent")),
+        line("fvl", -fvl_pts, fvl_value, est("fvl_percent") and fvl_note is None, fvl_note),
     ]
     score = a_points - protein_pts - fiber_pts - fvl_pts
     lo, hi = score_range(nutri_class, cfg)

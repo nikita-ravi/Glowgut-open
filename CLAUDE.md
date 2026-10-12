@@ -47,7 +47,7 @@ specs/           feature specs with requirement IDs (the source of truth for beh
 api/app/         FastAPI app: main.py, routers/, services/ (gtin, off_client, off_mapping, lookup, alternatives, recalls), db/
 api/app/scoring/ engine.py, nutriscore_2023.py, additives.py, processing.py, explain.py, config.py
 api/migrations/  Alembic migrations
-api/tests/       unit/, integration/ (Docker Postgres, OFF mocked with respx), golden/ (Nutri-Score golden set)
+api/tests/       unit/, integration/ (Docker Postgres, OFF mocked with respx), pipeline/, golden/ (3,000-product ODbL sample; CI enforces >= 99%)
 web/             Next.js PWA
 config/scoring.yaml   weights and thresholds; bump engine_version on any change
 data/            raw dumps (gitignored, never committed)
@@ -67,6 +67,7 @@ uv run python -m pipeline.off_bulk            # bulk-load US products from the O
                                               # with data/usda/branded.zip present (FDC Branded Foods CSV), USDA fills nutrient gaps
 uv run pytest                                 # unit + integration + spec traceability
 uv run pytest --cov                           # same, with coverage (fails under 85%)
+uv run python -m pipeline.golden              # golden gate on the full US extract (>= 99% Nutri-Score match with OFF)
 uv run ruff check . && uv run ruff format --check . && uv run mypy api pipeline   # lint and types
 uv run fastapi dev api/app/main.py            # API on :8000
 cd web && corepack pnpm@10.18.3 install       # web deps (also copies the ZXing .wasm into public/)
@@ -105,4 +106,5 @@ Update this section as soon as a command changes.
 - USDA stores barcodes as 14-digit GTINs: search FoodData Central with `gtin.zfill(14)`; the 12- or 13-digit form finds nothing. `DEMO_KEY` allows ~10 requests an hour; set `USDA_API_KEY` (free at api.data.gov) for real use.
 - USDA spells categories inconsistently (`A  B`, `A - B`, `A – B`). `usda_mapping.category_key` normalizes them; key `config/usda_categories.yaml` the same way.
 - The Supabase free tier pauses after 7 idle days. The weekly GitHub Actions job keeps it active.
+- Any scoring change must keep the golden gate at >= 99% (`api/tests/golden`). Run `pipeline.golden` on the full extract and read `reports/golden_mismatches.csv` before changing class tags or thresholds.
 - Nutri-Score has separate rules for general foods, beverages, cheese, and fats/oils/nuts/seeds. Always pass the category.

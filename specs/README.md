@@ -53,3 +53,4 @@ and noting why; its tests go with it.
 | [012-usda](012-usda.md) | USDA FoodData Central: bulk gap-fill and live fallback | implemented |
 | [013-us-additive-status](013-us-additive-status.md) | US regulatory status of additives (FDA) | implemented |
 | [014-ingredient-estimates](014-ingredient-estimates.md) | Fruit/veg share, NOVA and additives estimated from ingredients | implemented |
+| [015-golden-gate](015-golden-gate.md) | Nutri-Score agreement with Open Food Facts (≥ 99%) | implemented |

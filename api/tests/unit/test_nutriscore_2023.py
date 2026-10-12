@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 
 from app.scoring import nutriscore_2023 as ns
@@ -284,3 +286,19 @@ def test_score_ranges() -> None:
     assert ns.score_range("beverage", CFG) == (-18, 54)
     r = compute(**SNACK)
     assert (r.min_score, r.max_score) == (-17, 55)
+
+
+@spec("NS-22")
+def test_olive_rapeseed_and_walnut_oils_count_as_100_percent_fvl() -> None:
+    cfg = default_config().nutriscore
+    evoo: dict[str, Any] = dict(energy_kj=3622.0, sugars_g=0.0, saturated_fat_g=13.986,
+                                fat_g=97.9, salt_g=0.0, fiber_g=0.0, proteins_g=0.0,
+                                fvl_percent=0.0)  # fmt: skip
+    olive = ns.compute(
+        facts(tags=("en:fats", "en:vegetable-oils", "en:olive-oils"), **evoo), cfg, []
+    )
+    sunflower = ns.compute(facts(tags=("en:fats", "en:sunflower-oils"), **evoo), cfg, [])
+    assert (olive.score, olive.grade) == (0, "b")  # matches Open Food Facts for EVOO
+    assert sunflower.score == 5
+    fvl = next(ln for ln in olive.lines if ln.rule_id.endswith(".fvl"))
+    assert fvl.input_value == 100.0 and fvl.note and not fvl.estimated

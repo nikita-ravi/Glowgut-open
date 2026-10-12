@@ -63,6 +63,7 @@ class NutriScoreConfig(_Frozen):
     source_urls: dict[str, str]
     classes: ClassTags
     red_meat_tags: list[str]
+    fvl_oil_tags: list[str]
     non_nutritive_sweeteners: list[str]
     general: GeneralTables
     fats_oils_nuts_seeds: FatsTables

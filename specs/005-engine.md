@@ -63,3 +63,4 @@ category tags, NOVA group, the additive list (or `None` if unknown), and
 | --- | --- |
 | 0.1.0 | First version: Nutri-Score 2023, OFF-taxonomy additives, NOVA. |
 | 0.2.0 | Missing fruit/vegetable share and NOVA group are estimated from the ingredient list (spec 014), flagged `estimated`. |
+| 0.3.0 | Found by the golden gate (spec 015): only spring and mineral waters are in the water class; olive, rapeseed and walnut oils count as 100% fruit/vegetables (NS-22). |

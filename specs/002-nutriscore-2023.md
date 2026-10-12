@@ -61,6 +61,7 @@ Sources:
 
 - **NS-20** The result lists each component with its input value, points, and the rule id `nutriscore.<class>.<component>` so the engine can copy it into the breakdown.
 - **NS-21** The result includes `score`, `grade`, `class`, `min_score`, `max_score` (the theoretical range for the class, used by the engine to normalize) and `missing`.
+- **NS-22** In the fats/oils/nuts/seeds class, olive, rapeseed (canola) and walnut oils (`nutriscore.fvl_oil_tags`) count as 100% fruit, vegetables and legumes (2023 update). The fvl line notes this.
 
 ## Golden gate
 
