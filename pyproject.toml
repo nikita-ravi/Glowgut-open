@@ -28,6 +28,8 @@ dev = [
     "mypy>=1.13",
     "types-pyyaml>=6.0",
     "pip-licenses>=5.0",
+    "pre-commit>=4.6.2",
+    "pytest-cov>=7.1.0",
 ]
 
 [build-system]
@@ -67,3 +69,11 @@ explicit_package_bases = true
 [[tool.mypy.overrides]]
 module = ["respx.*"]
 ignore_missing_imports = true
+
+[tool.coverage.run]
+source = ["api/app", "pipeline"]
+
+[tool.coverage.report]
+fail_under = 85
+skip_covered = true
+show_missing = true

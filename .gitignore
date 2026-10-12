@@ -23,3 +23,5 @@ web/test-results/
 web/playwright-report/
 
 .DS_Store
+.coverage
+coverage.xml
