@@ -23,9 +23,24 @@ def spec_requirements() -> dict[str, set[str]]:
     return by_status
 
 
-def _tested_ids() -> set[str]:
-    """IDs referenced by @pytest.mark.spec(...) anywhere under api/tests."""
+WEB_TESTS = ROOT / "web"
+WEB_TEST_GLOBS = ("src/**/*.test.ts", "src/**/*.test.tsx", "e2e/**/*.spec.ts")
+WEB_ID = re.compile(r"\[([A-Z]+-\d+)\]")
+
+
+def _web_tested_ids() -> set[str]:
+    """IDs cited in web test titles, e.g. it("[SCAN-5] accepts ...")."""
     ids: set[str] = set()
+    for pattern in WEB_TEST_GLOBS:
+        for path in WEB_TESTS.glob(pattern):
+            if "node_modules" not in path.parts:
+                ids.update(WEB_ID.findall(path.read_text()))
+    return ids
+
+
+def _tested_ids() -> set[str]:
+    """IDs referenced by @spec(...) under api/tests, plus IDs cited in web test titles."""
+    ids: set[str] = _web_tested_ids()
     for path in TEST_DIR.rglob("test_*.py"):
         for node in ast.walk(ast.parse(path.read_text())):
             if not isinstance(node, ast.Call):
