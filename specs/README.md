@@ -36,4 +36,6 @@ and noting why; its tests go with it.
 
 ## Index
 
-No specs yet.
+| Spec | Area | Status |
+| --- | --- | --- |
+| [001-gtin](001-gtin.md) | Barcode normalization and validation | implemented |
