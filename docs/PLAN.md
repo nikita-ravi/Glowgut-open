@@ -53,9 +53,9 @@ Every task follows the spec-driven workflow in `specs/README.md`: spec first, th
 - [x] PWA manifest + service worker (offline shell only); installable on iOS/Android
 - [x] Scanner page: `barcode-detector` polyfill, camera permission UX, torch toggle where supported, manual entry fallback
 - [x] Product page: score + band (text label + color), component bars, breakdown list with source links, ingredients, additives (grade + US status), completeness badge, attribution + "not medical advice" footer *(US regulatory status shows once FDA data is loaded)*
-- [ ] `GET /products/{gtin}/alternatives` + an alternatives strip
-- [ ] Recall banner from openFDA (cached daily, matched on brand + product name)
-- [ ] Playwright e2e: scan-by-entry → product page → breakdown → alternative *(done except the alternative step; axe check and offline shell also covered)*
+- [x] `GET /products/{gtin}/alternatives` + an alternatives strip *(fills up once the bulk pipeline loads products)*
+- [x] Recall banner from openFDA (synced from the bulk file, matched on barcode or brand + product name) *(daily GitHub Actions sync waits for the hosted DB)*
+- [x] Playwright e2e: scan-by-entry → product page → breakdown → alternative *(axe check, offline shell and recall banner also covered)*
 
 **Done when:** scan-to-result is under 3 s on a mid-range phone over 4G (cache hit), and axe reports no WCAG 2.1 AA violations on the product page.
 
