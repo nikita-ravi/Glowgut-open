@@ -38,3 +38,63 @@ jobs:
           uv run pip-licenses --format=csv --fail-on="GNU General Public License v2 (GPLv2);GNU General Public License v3 (GPLv3);GNU Affero General Public License v3;GPL-2.0;GPL-3.0;AGPL-3.0;GPL;AGPL"
       - name: Tests (unit, integration, spec traceability)
         run: uv run pytest -q
+
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: web/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - name: License check (fail on GPL/AGPL; LGPL sharp/libvips is allowed)
+        run: |
+          pnpm licenses list --json | node -e '
+            const d = JSON.parse(require("fs").readFileSync(0, "utf8"));
+            const bad = Object.keys(d).filter((k) => /(^|[^L])GPL/i.test(k));
+            if (bad.length) { console.error("Disallowed licenses:", bad); process.exit(1); }'
+      - run: pnpm test
+
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ofs
+          POSTGRES_PASSWORD: ofs
+          POSTGRES_DB: ofs_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ofs -d ofs_test"
+          --health-interval 2s --health-timeout 3s --health-retries 30
+    env:
+      E2E_DATABASE_URL: postgresql+asyncpg://ofs:ofs@localhost:5432/ofs_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --frozen
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: web/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+        working-directory: web
+      - run: pnpm exec playwright install --with-deps chromium
+        working-directory: web
+      - run: pnpm e2e
+        working-directory: web
