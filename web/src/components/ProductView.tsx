@@ -176,7 +176,7 @@ export function ProductView({
           <div key={group.component}>
             <h3 className="font-medium">{group.label}</h3>
             {group.lines.length === 0 ? (
-              <p className="text-sm text-zinc-600">No data.</p>
+              <p className="text-sm text-zinc-600">{group.emptyText}</p>
             ) : (
               <ul className="mt-1 divide-y divide-zinc-200">
                 {group.lines.map((line) => (

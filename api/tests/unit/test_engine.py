@@ -184,3 +184,24 @@ def test_additive_order_does_not_matter(adds: list[AdditiveInfo]) -> None:
     a = score(facts(nova=3, additives=tuple(adds), **SNACK)).to_dict()
     b = score(facts(nova=3, additives=tuple(shuffled), **SNACK)).to_dict()
     assert a == b
+
+
+@spec("ENGINE-13")
+@pytest.mark.parametrize(
+    ("value", "unit", "shown"),
+    [(1009.73, "kJ", "1010"), (9.7345, "g", "9.7"), (20.354, "g", "20.4"), (0.8036, "g", "0.8"),
+     (0.05, "g", "0.05"), (12.0, "g", "12"), (45.06, "%", "45.1"), (0.0, "%", "0")],
+)  # fmt: skip
+def test_numbers_in_sentences_are_rounded_for_reading(value: float, unit: str, shown: str) -> None:
+    from app.scoring.explain import display_number
+
+    assert display_number(value, unit) == shown
+
+
+@spec("ENGINE-13")
+def test_explanations_never_show_raw_float_noise() -> None:
+    cfg = default_config()
+    noisy = facts(**{**SNACK, "sugars_g": 20.354, "saturated_fat_g": 9.7345})
+    sentences = " ".join(explain(score(noisy, cfg)))
+    assert "20.354" not in sentences and "9.7345" not in sentences
+    assert "20.4 g" in sentences

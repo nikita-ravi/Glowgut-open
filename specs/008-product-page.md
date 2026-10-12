@@ -19,6 +19,8 @@ breakdown and explanation. The UI never recomputes a score.
 
 - **PAGE-5** The breakdown lists every line grouped by component. Each line shows a readable label, the input value, the points, and a "Source" link to its `source_url`. Estimated lines are marked "Estimated".
 - **PAGE-6** Additives show name and EFSA rating in words. Unrated additives say "Not rated by EFSA".
+- **PAGE-15** Input values on breakdown lines are rounded as in ENGINE-13 (kJ whole, grams and % to 1 decimal, or 2 below 1).
+- **PAGE-16** A component with no breakdown lines says why: additives known with none found → "No additives found in the ingredient list."; unknown → "No data."
 - **PAGE-7** A data badge comes from `confidence`: ≥ 0.9 "Complete data", ≥ 0.6 "Partial data", else "Limited data". Missing inputs are listed in words.
 - **PAGE-8** Ingredients text is shown when present.
 

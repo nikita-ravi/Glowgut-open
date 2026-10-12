@@ -176,3 +176,33 @@ describe("[PAGE-12] footer", () => {
     expect(screen.getByText("Educational information, not medical advice.")).toBeInTheDocument();
   });
 });
+
+describe("[PAGE-15] rounded input values", () => {
+  it("shows kJ whole and grams to one decimal", () => {
+    const f = structuredClone(scored) as unknown as Fixture;
+    const line = f.breakdown.score.breakdown.find((l) => l.rule_id === "nutriscore.general.sugars")!;
+    line.input_value = 20.354;
+    const energy = f.breakdown.score.breakdown.find((l) => l.rule_id === "nutriscore.general.energy")!;
+    energy.input_value = 1009.73;
+    render(<ProductView product={f.product} breakdown={f.breakdown} />);
+    expect(screen.getByText("Sugars").closest("li")).toHaveTextContent("20.4 g");
+    expect(screen.getByText("Energy").closest("li")).toHaveTextContent("1010 kJ");
+  });
+});
+
+describe("[PAGE-16] empty components say why", () => {
+  it("says no additives were found when the ingredient list has none", () => {
+    const f = structuredClone(scored) as unknown as Fixture;
+    f.breakdown.score.breakdown = f.breakdown.score.breakdown.filter(
+      (l) => l.component !== "additives" || l.rule_id.startsWith("component."),
+    );
+    render(<ProductView product={f.product} breakdown={f.breakdown} />);
+    expect(screen.getByText("No additives found in the ingredient list.")).toBeInTheDocument();
+  });
+
+  it("says No data when the component is unknown", () => {
+    renderFixture(rescaled); // processing unknown
+    const section = screen.getByRole("region", { name: "Every rule applied" });
+    expect(within(section).getByText("No data.")).toBeInTheDocument();
+  });
+});
