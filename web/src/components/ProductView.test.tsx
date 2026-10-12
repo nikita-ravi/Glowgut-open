@@ -1,0 +1,178 @@
+import { render, screen, within } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+
+import type { Breakdown, Product } from "@/lib/api";
+import notScored from "@/test/fixtures/not_scored.json";
+import rescaled from "@/test/fixtures/rescaled.json";
+import scored from "@/test/fixtures/scored.json";
+
+import { ProductFooter, ProductMessage, ProductView } from "./ProductView";
+
+// Fixtures are generated from the real Python engine (see web/src/test/fixtures).
+type Fixture = { product: Product; breakdown: Breakdown };
+
+function renderFixture(f: unknown) {
+  const { product, breakdown } = f as Fixture;
+  return render(<ProductView product={product} breakdown={breakdown} />);
+}
+
+describe("[PAGE-1] score and band", () => {
+  it("shows the total out of 100 and the band label in text", () => {
+    renderFixture(scored);
+    expect(screen.getByText("49")).toBeInTheDocument();
+    expect(screen.getByText("/ 100")).toBeInTheDocument();
+    expect(screen.getByText("Mediocre")).toBeInTheDocument();
+  });
+});
+
+describe("[PAGE-2] component bars", () => {
+  it("shows points out of each weight", () => {
+    renderFixture(scored);
+    const section = screen.getByRole("region", { name: "What makes up the score" });
+    expect(within(section).getByText("Nutrition").nextSibling).toHaveTextContent("36.7 of 60");
+    expect(within(section).getByText("Processing").nextSibling).toHaveTextContent("0 of 10");
+  });
+
+  it("shows No data for an unknown component and explains the rescale", () => {
+    renderFixture(rescaled);
+    const section = screen.getByRole("region", { name: "What makes up the score" });
+    expect(within(section).getByText("Processing").nextSibling).toHaveTextContent("No data");
+    expect(section).toHaveTextContent("worked out from the parts we have");
+  });
+});
+
+describe("[PAGE-3] Nutri-Score grade", () => {
+  it("shows the grade letter and the class", () => {
+    renderFixture(rescaled);
+    expect(screen.getByText(/Nutri-Score C, scored as a drink/)).toBeInTheDocument();
+  });
+});
+
+describe("[PAGE-4] explanation", () => {
+  it("lists the API's sentences", () => {
+    renderFixture(scored);
+    const section = screen.getByRole("region", { name: "In short" });
+    for (const sentence of (scored as unknown as Fixture).breakdown.explanation) {
+      expect(within(section).getByText(sentence)).toBeInTheDocument();
+    }
+  });
+});
+
+describe("[PAGE-5] breakdown lines", () => {
+  it("groups lines by component with value, points and a source link", () => {
+    renderFixture(scored);
+    const section = screen.getByRole("region", { name: "Every rule applied" });
+    const sugars = within(section).getByText("Sugars").closest("li")!;
+    expect(sugars).toHaveTextContent("12 g");
+    expect(sugars).toHaveTextContent("+3");
+    expect(within(sugars).getByRole("link", { name: "Source for Sugars" })).toHaveAttribute(
+      "href",
+      expect.stringContaining("https://"),
+    );
+    expect(within(section).getByRole("heading", { name: "Additives" })).toBeInTheDocument();
+  });
+
+  it("marks estimated lines", () => {
+    renderFixture(scored);
+    const fvl = screen.getByText("Fruit, vegetables and legumes").closest("li")!;
+    expect(within(fvl).getByText("Estimated")).toBeInTheDocument();
+  });
+
+  it("does not show the component summary lines as rules", () => {
+    renderFixture(scored);
+    expect(screen.queryByText(/component\./)).toBeNull();
+  });
+});
+
+describe("[PAGE-6] additives", () => {
+  it("shows the EFSA rating in words, and Not rated for unrated additives", () => {
+    renderFixture(scored);
+    const nitrite = screen.getByText("E250 - Sodium nitrite").closest("li")!;
+    expect(nitrite).toHaveTextContent("High estimated overexposure risk (EFSA)");
+    const citric = screen.getByText("E330 - Citric acid").closest("li")!;
+    expect(citric).toHaveTextContent("Not rated by EFSA");
+  });
+
+  it("does not repeat the rating as a second note", () => {
+    renderFixture(scored);
+    const nitrite = screen.getByText("E250 - Sodium nitrite").closest("li")!;
+    expect(nitrite.textContent!.match(/overexposure risk/gi)).toHaveLength(1);
+    const nova = screen.getByText("Processing (NOVA)").closest("li")!;
+    expect(nova.textContent!.match(/ultra-processed/g)).toHaveLength(1);
+  });
+});
+
+describe("[PAGE-7] data badge", () => {
+  it("labels confidence and lists missing inputs in words", () => {
+    renderFixture(rescaled);
+    expect(screen.getByText("Partial data")).toBeInTheDocument(); // 8 of 9 inputs = 0.89
+    expect(screen.getByText("Missing: processing level.")).toBeInTheDocument();
+  });
+
+  it("shows Complete data when every input is present", () => {
+    const f = structuredClone(scored) as unknown as Fixture;
+    f.product.score.confidence = 1;
+    render(<ProductView product={f.product} breakdown={f.breakdown} />);
+    expect(screen.getByText("Complete data")).toBeInTheDocument();
+  });
+
+  it("shows Limited data for low confidence", () => {
+    renderFixture(notScored);
+    expect(screen.getByText("Limited data")).toBeInTheDocument();
+  });
+});
+
+describe("[PAGE-8] ingredients", () => {
+  it("shows ingredients when present and omits the section otherwise", () => {
+    const { unmount } = renderFixture(scored);
+    expect(screen.getByRole("region", { name: "Ingredients" })).toHaveTextContent("Oats, sugar");
+    unmount();
+    renderFixture(notScored);
+    expect(screen.queryByRole("region", { name: "Ingredients" })).toBeNull();
+  });
+});
+
+describe("[PAGE-9] not scored", () => {
+  it("says Not scored and why, and still shows additives and processing", () => {
+    renderFixture(notScored);
+    expect(screen.getByText("Not scored")).toBeInTheDocument();
+    expect(screen.getByText(/The label data is missing sugars, saturated fat/)).toBeInTheDocument();
+    expect(screen.getByText("E338 - Phosphoric acid")).toBeInTheDocument();
+    expect(screen.getByText("Processing (NOVA)")).toBeInTheDocument();
+    expect(screen.queryByText("/ 100")).toBeNull();
+  });
+});
+
+describe("[PAGE-10] stale data", () => {
+  it("shows a notice when the data couldn't be refreshed", () => {
+    renderFixture(rescaled);
+    expect(screen.getByRole("status")).toHaveTextContent("Showing saved data");
+  });
+
+  it("shows no notice for fresh data", () => {
+    renderFixture(scored);
+    expect(screen.queryByRole("status")).toBeNull();
+  });
+});
+
+describe("[PAGE-11] error states render a message and a way back", () => {
+  it("renders a title, body and a link to scan again", () => {
+    render(<ProductMessage title="We couldn't find this product" body="Not in the database." />);
+    expect(screen.getByRole("heading", { name: "We couldn't find this product" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Scan or type another barcode" })).toHaveAttribute(
+      "href",
+      "/",
+    );
+  });
+});
+
+describe("[PAGE-12] footer", () => {
+  it("attributes Open Food Facts and says it is not medical advice", () => {
+    render(<ProductFooter />);
+    expect(screen.getByRole("link", { name: "Open Food Facts (ODbL)" })).toHaveAttribute(
+      "href",
+      "https://world.openfoodfacts.org",
+    );
+    expect(screen.getByText("Educational information, not medical advice.")).toBeInTheDocument();
+  });
+});
