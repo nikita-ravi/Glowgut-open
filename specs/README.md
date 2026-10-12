@@ -47,3 +47,5 @@ and noting why; its tests go with it.
 | [006-product-lookup](006-product-lookup.md) | `GET /products/{gtin}` and breakdown | implemented |
 | [007-scanner](007-scanner.md) | Camera scanner and manual entry | implemented |
 | [008-product-page](008-product-page.md) | Product page and PWA shell | implemented |
+| [009-alternatives](009-alternatives.md) | Better-scored alternatives (API + strip) | draft |
+| [010-recalls](010-recalls.md) | openFDA recall banner | draft |
