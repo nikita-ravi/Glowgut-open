@@ -42,7 +42,7 @@ Source of truth for *what* to build. `docs/PLAN.md` says *in what order*.
 
 | Source | Use | Access | License |
 | --- | --- | --- | --- |
-| Open Food Facts product DB | Products: ingredients, nutriments, NOVA, categories, labels, images | `https://huggingface.co/datasets/openfoodfacts/product-database/resolve/main/food.parquet` (~4.2 GB, refreshed daily) + live API | ODbL: attribution; a published derived DB must stay ODbL |
+| Open Food Facts product DB | Products: ingredients, nutriments, NOVA, categories, labels, images | `https://static.openfoodfacts.org/data/en.openfoodfacts.org.products.csv.gz` (~1.3 GB, refreshed daily) + live API | ODbL: attribution; a published derived DB must stay ODbL |
 | OFF taxonomies | Additives (E-number → name, class, EFSA evaluation, ADI, overexposure risk), ingredients, categories, labels, allergens | OFF taxonomy files / API; Python SDK `openfoodfacts` (MIT) | ODbL |
 | USDA FoodData Central: Branded | US UPCs with label nutrition + ingredient text (~2M) | CSV download from fdc.nal.usda.gov/download-datasets + REST API (free data.gov key) | CC0; cite "USDA FoodData Central" |
 | EFSA OpenFoodTox | Reference values (ADI/NOAEL) + link to the EFSA opinion | Download (EFSA Knowledge Junction / Zenodo) | Re-use allowed with EFSA acknowledged |
@@ -51,7 +51,7 @@ Source of truth for *what* to build. `docs/PLAN.md` says *in what order*.
 | Robotoff (OFF ML) | Nutrition-table extraction from label photos | Robotoff API | Open source |
 | Phase 2: Open Beauty Facts, EU CosIng | Cosmetics + INCI ingredient regulation | `beauty.parquet` (~42 MB) / EU Open Data Portal | ODbL / EU open data |
 
-**Before writing any import code, inspect the actual schema:** `DESCRIBE SELECT * FROM 'data/off/food.parquet'` in DuckDB, and read the CSV headers. Column names in this spec are targets, not guarantees.
+**Before writing any import code, inspect the actual schema:** read the export's CSV header (`gunzip -c … | head -1`) and the USDA CSV headers. Column names in this spec are targets, not guarantees.
 
 ## 4. Architecture
 
@@ -65,7 +65,7 @@ API (FastAPI): lookup service ─► scoring engine ─► response
 PostgreSQL (products, scores, users)  Live APIs: OFF · USDA · openFDA · Robotoff
         ▲
         │ bulk upsert + re-score (weekly, GitHub Actions)
-Offline pipeline: OFF Parquet + USDA CSV + taxonomies/EFSA/FDA → DuckDB (filter US, merge, dedupe)
+Offline pipeline: OFF CSV export + USDA CSV + taxonomies/EFSA/FDA → Polars (filter US, merge, dedupe)
 ```
 
 ### Lookup flow (`GET /products/{gtin}`)
