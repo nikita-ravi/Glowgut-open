@@ -15,6 +15,8 @@ from app.scoring.types import AdditiveInfo, Nutrient, ProductFacts
 from app.services.gtin import lookup_forms
 from app.services.off_client import OFFClient, SourceUnavailable
 from app.services.off_mapping import additive_codes, map_product
+from app.services.usda_client import USDAClient
+from app.services.usda_mapping import map_product as map_usda_product
 
 
 class ProductNotFound(Exception):
@@ -136,6 +138,7 @@ async def lookup(
     cfg: ScoringConfig,
     now: datetime,
     cache_days: int,
+    usda: USDAClient | None = None,
 ) -> LookupResult:
     """Raise ProductNotFound or SourceUnavailable; otherwise return product + score."""
     cached = await session.get(Product, gtin)
@@ -149,11 +152,15 @@ async def lookup(
             raise
         return LookupResult(cached, await _score(session, cached, cfg), stale=True)  # LOOKUP-8
 
-    if raw is None:
-        raise ProductNotFound(gtin)  # LOOKUP-7
+    if raw is not None:
+        row, codes = map_product(gtin, raw, now), additive_codes(raw)
+    else:
+        food = await usda.fetch(gtin) if usda is not None else None  # USDA-7
+        if food is None:
+            raise ProductNotFound(gtin)  # LOOKUP-7, USDA-9
+        row, codes = map_usda_product(gtin, food, now), None  # USDA-8
 
-    row = map_product(gtin, raw, now)
-    await _upsert(session, row, additive_codes(raw), cfg.engine_version)  # LOOKUP-6
+    await _upsert(session, row, codes, cfg.engine_version)  # LOOKUP-6
     await session.commit()
     product = await session.get(Product, gtin, populate_existing=True)
     assert product is not None

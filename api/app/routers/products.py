@@ -18,11 +18,13 @@ from app.services.gtin import InvalidGTIN, normalize
 from app.services.lookup import LookupResult, ProductNotFound, lookup
 from app.services.off_client import OFFClient, SourceUnavailable
 from app.services.recalls import find_recalls, recalls_as_of
+from app.services.usda_client import USDAClient
 from app.settings import Settings, get_settings
 
 router = APIRouter(prefix="/products", tags=["products"])
 ATTRIBUTION = "Data from Open Food Facts (ODbL)"
 RECALL_ATTRIBUTION = "Recall data from openFDA (FDA)"
+USDA_ATTRIBUTION = "Nutrition data from USDA FoodData Central"
 CACHE_CONTROL = "public, max-age=300"
 
 Session = Annotated[AsyncSession, Depends(get_session)]
@@ -33,20 +35,25 @@ def get_off(request: Request) -> OFFClient:
     return off
 
 
+def get_usda(request: Request) -> USDAClient | None:
+    usda: USDAClient | None = getattr(request.app.state, "usda", None)
+    return usda
+
+
 def get_now() -> datetime:
     return datetime.now(UTC)
 
 
 async def _resolve(
     raw_gtin: str, session: AsyncSession, off: OFFClient, cfg: ScoringConfig,
-    settings: Settings, now: datetime,
+    settings: Settings, now: datetime, usda: USDAClient | None = None,
 ) -> LookupResult:  # fmt: skip
     try:
         gtin = normalize(raw_gtin)  # LOOKUP-1
     except InvalidGTIN as exc:
         raise Problem(422, "Invalid barcode", str(exc)) from exc
     try:
-        return await lookup(session, gtin, off, cfg, now, settings.cache_days)
+        return await lookup(session, gtin, off, cfg, now, settings.cache_days, usda)
     except ProductNotFound as exc:  # LOOKUP-7
         raise Problem(
             404, "Product not found",
@@ -92,8 +99,17 @@ def _product_body(result: LookupResult) -> dict[str, Any]:
         "fetched_at": p.fetched_at.isoformat(),
         "stale": result.stale,
         "score": score,
-        "attribution": ATTRIBUTION,
+        "attribution": attribution(p.source_by_field),
     }
+
+
+def attribution(source_by_field: dict[str, str]) -> str:
+    """Credit every source the product's data came from (LOOKUP-10, USDA-8)."""
+    sources = set(source_by_field.values())
+    parts = [ATTRIBUTION] if "off" in sources or not sources else []
+    if "usda" in sources:
+        parts.append(USDA_ATTRIBUTION)
+    return ". ".join(parts)
 
 
 def _rehydrate(stored: dict[str, Any]) -> ScoreResult:
@@ -121,11 +137,12 @@ async def get_product(
     response: Response,
     session: Session,
     off: Annotated[OFFClient, Depends(get_off)],
+    usda: Annotated[USDAClient | None, Depends(get_usda)],
     cfg: Annotated[ScoringConfig, Depends(default_config)],
     settings: Annotated[Settings, Depends(get_settings)],
     now: Annotated[datetime, Depends(get_now)],
 ) -> dict[str, Any] | Response:
-    result = await _resolve(gtin, session, off, cfg, settings, now)
+    result = await _resolve(gtin, session, off, cfg, settings, now, usda)
     if (not_modified := _cached(request, response, _etag(result, cfg))) is not None:
         return not_modified
     return _product_body(result)  # LOOKUP-10
@@ -138,11 +155,12 @@ async def get_breakdown(
     response: Response,
     session: Session,
     off: Annotated[OFFClient, Depends(get_off)],
+    usda: Annotated[USDAClient | None, Depends(get_usda)],
     cfg: Annotated[ScoringConfig, Depends(default_config)],
     settings: Annotated[Settings, Depends(get_settings)],
     now: Annotated[datetime, Depends(get_now)],
 ) -> dict[str, Any] | Response:
-    result = await _resolve(gtin, session, off, cfg, settings, now)  # LOOKUP-12
+    result = await _resolve(gtin, session, off, cfg, settings, now, usda)  # LOOKUP-12
     if (not_modified := _cached(request, response, _etag(result, cfg))) is not None:
         return not_modified
     return {
@@ -159,11 +177,12 @@ async def get_alternatives(
     response: Response,
     session: Session,
     off: Annotated[OFFClient, Depends(get_off)],
+    usda: Annotated[USDAClient | None, Depends(get_usda)],
     cfg: Annotated[ScoringConfig, Depends(default_config)],
     settings: Annotated[Settings, Depends(get_settings)],
     now: Annotated[datetime, Depends(get_now)],
 ) -> dict[str, Any]:
-    result = await _resolve(gtin, session, off, cfg, settings, now)  # ALT-1
+    result = await _resolve(gtin, session, off, cfg, settings, now, usda)  # ALT-1
     category, alternatives = await find_alternatives(session, result.product, result.score, cfg)
     response.headers["Cache-Control"] = CACHE_CONTROL  # ALT-9: no ETag, the list changes
     return {
@@ -180,11 +199,12 @@ async def get_recalls(
     response: Response,
     session: Session,
     off: Annotated[OFFClient, Depends(get_off)],
+    usda: Annotated[USDAClient | None, Depends(get_usda)],
     cfg: Annotated[ScoringConfig, Depends(default_config)],
     settings: Annotated[Settings, Depends(get_settings)],
     now: Annotated[datetime, Depends(get_now)],
 ) -> dict[str, Any]:
-    result = await _resolve(gtin, session, off, cfg, settings, now)  # RECALL-8
+    result = await _resolve(gtin, session, off, cfg, settings, now, usda)  # RECALL-8
     response.headers["Cache-Control"] = "public, max-age=3600"  # RECALL-11: no ETag
     return {
         "gtin": result.product.gtin,

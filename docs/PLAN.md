@@ -21,12 +21,12 @@ Every task follows the spec-driven workflow in `specs/README.md`: spec first, th
 ## M1: Data foundation (weeks 1–2)
 
 - [x] `pipeline/off_bulk.py`: download the OFF CSV export to `data/off/` (skip if present); record the real column names in a comment; filter to US + scorable rows; select the needed fields *(spec 011; Polars, not DuckDB)*
-- [ ] `pipeline/usda.py`: read Branded Foods CSVs from `data/usda/` (inspect headers first); pivot the needed nutrients per 100 g; normalize `gtin_upc`
+- [x] `pipeline/usda_bulk.py`: read Branded Foods CSVs straight from the zip in `data/usda/` (headers inspected); pivot the needed nutrients per 100 g; normalize `gtin_upc` *(spec 012)*
 - [x] `api/app/services/gtin.py`: normalize + validate GTIN (UPC-A, EAN-8, EAN-13), with unit tests covering bad check digits, leading zeros, and 12↔13 forms
-- [ ] `pipeline/merge.py`: per-field merge on GTIN, with `source_by_field` and a `completeness` score
+- [x] Per-field merge on GTIN, with `source_by_field` and a `completeness` score *(USDA fills OFF gaps, never replaces; in `usda_mapping.fill_gaps`)*
 - [ ] `pipeline/reference.py`: build the `additives` table from the OFF additives taxonomy + OpenFoodTox + FDA Substances Added to Food *(OFF taxonomy part done; OpenFoodTox and FDA status still to do)*
 - [x] `pipeline/load.py`: staging table → `COPY` → merge in a transaction (keeps newer live rows); size report; fail above 450 MB
-- [x] `GET /products/{gtin}`: cache → OFF live → USDA live → 404 `{"next":"contribute"}`; upsert on fetch; descriptive User-Agent; backoff on 429 *(spec 006; USDA live fallback still to do)*
+- [x] `GET /products/{gtin}`: cache → OFF live → USDA live → 404 `{"next":"contribute"}`; upsert on fetch; descriptive User-Agent; backoff on 429 *(spec 006; USDA live fallback in spec 012)*
 - [x] Integration tests for each branch of the lookup flow (mock HTTP with `respx`)
 
 **⛳ Coverage gate:** collect ~200 real US barcodes (pantry, receipts, a grocery run) into `data/coverage_sample.txt`. Report the % resolved by cache + live APIs. If < 85%, narrow to the top grocery categories and note it in SPEC before continuing.

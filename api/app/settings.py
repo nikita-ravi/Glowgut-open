@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     off_contact: str = "set-OFF_CONTACT-in-.env"
     off_timeout_s: float = 4.0
     cache_days: int = 30
+    usda_base_url: str = "https://api.nal.usda.gov"
+    usda_api_key: str = "DEMO_KEY"  # free; a personal api.data.gov key raises the rate limit
+    usda_timeout_s: float = 4.0
 
     @property
     def user_agent(self) -> str:
