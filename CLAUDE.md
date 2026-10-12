@@ -42,9 +42,9 @@ Feature behaviour is defined in `specs/NNN-*.md` as numbered requirements (`**GT
 ## Repo layout
 
 ```
-pipeline/        offline data: reference.py (additives, done); bulk OFF/USDA import (tool not chosen yet)
+pipeline/        offline data: reference.py (additives), recalls.py (openFDA); bulk OFF/USDA import (tool not chosen yet)
 specs/           feature specs with requirement IDs (the source of truth for behaviour)
-api/app/         FastAPI app: main.py, routers/, services/ (gtin, off_client, off_mapping, lookup), db/
+api/app/         FastAPI app: main.py, routers/, services/ (gtin, off_client, off_mapping, lookup, alternatives, recalls), db/
 api/app/scoring/ engine.py, nutriscore_2023.py, additives.py, processing.py, explain.py, config.py
 api/migrations/  Alembic migrations
 api/tests/       unit/, integration/ (Docker Postgres, OFF mocked with respx), golden/ (Nutri-Score golden set)
@@ -61,6 +61,7 @@ cp .env.example .env                          # then set OFF_CONTACT
 docker compose up -d db                       # local Postgres 16 (also creates ofs_test for tests)
 uv run alembic upgrade head                   # migrations
 uv run python -m pipeline.reference           # load the additives table from the OFF taxonomy
+uv run python -m pipeline.recalls             # sync openFDA recalls (last 3 years, ~6 MB download)
 uv run pytest                                 # unit + integration + spec traceability
 uv run ruff check . && uv run ruff format --check . && uv run mypy api pipeline   # lint and types
 uv run fastapi dev api/app/main.py            # API on :8000

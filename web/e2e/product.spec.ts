@@ -13,7 +13,7 @@ test("[SCAN-1] [SCAN-9] [PAGE-1] type a barcode, see the scored product and its 
 
   await expect(page).toHaveURL(`/p/${GTIN}`);
   await expect(page.getByRole("heading", { name: "Crunchy Oat Bars" })).toBeVisible();
-  await expect(page.getByText("/ 100")).toBeVisible();
+  await expect(page.getByText("/ 100", { exact: true })).toBeVisible();
   await expect(page.getByText("Mediocre", { exact: true })).toBeVisible(); // capped at 49 by E250 (ADD-5)
   await expect(page.getByRole("heading", { name: "Every rule applied" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Source for Sugars" })).toHaveAttribute(
@@ -78,4 +78,22 @@ test("[PWA-2] home opens offline; product data is never served from the cache", 
   const failed = await page.goto(`/p/${GTIN}`).catch(() => null);
   if (failed) await expect(page.getByText("Crunchy Oat Bars")).toHaveCount(0);
   await context.setOffline(false);
+});
+
+test("[ALT-10] [RECALL-12] the recall banner shows, and an alternative opens its product page", async ({
+  page,
+}) => {
+  await page.goto(`/p/${GTIN}`);
+  const banner = page.getByRole("status").filter({ hasText: "FDA" });
+  await expect(
+    banner.getByRole("heading", { name: "A related FDA recall is on record" }),
+  ).toBeVisible();
+  await expect(banner).toContainText("Undeclared peanut");
+
+  const strip = page.getByRole("region", { name: "Better-scored alternatives" });
+  await expect(strip).toContainText("In cereal bars");
+  await strip.getByRole("link", { name: /Plain Oat Bars/ }).click();
+
+  await expect(page).toHaveURL("/p/0000000000017");
+  await expect(page.getByRole("heading", { name: "Plain Oat Bars", level: 1 })).toBeVisible();
 });

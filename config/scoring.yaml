@@ -1,5 +1,5 @@
-# Scoring configuration. Any change here must bump engine_version and add a
-# changelog line in specs/005-engine.md.
+# Scoring configuration. Any change above the "Not scoring" line must bump engine_version
+# and add a changelog line in specs/005-engine.md.
 engine_version: "0.1.0"
 
 weights:
@@ -147,3 +147,41 @@ processing:
     2: 0.67
     3: 0.33
     4: 0.0
+
+# ---- Not scoring: these sections never change a score, so editing them doesn't bump
+# engine_version.
+
+alternatives: # specs/009
+  min_gain: 5 # ALT-5: points above the base product's total
+  limit: 5 # ALT-6
+  min_confidence: 0.6 # ALT-2: never recommend "Limited data" products
+  fallback_categories: 2 # ALT-4: less specific categories tried after primary_category
+
+recalls: # specs/010
+  window_years: 3 # RECALL-2
+  limit: 3 # RECALL-10
+  # RECALL-7: store brands that sell hundreds of unrelated products. They only match by code.
+  generic_brands:
+    - great value
+    - kirkland signature
+    - kirkland
+    - member's mark
+    - market pantry
+    - good & gather
+    - 365 by whole foods market
+    - "365"
+    - kroger
+    - simple truth
+    - signature select
+    - trader joe's
+    - food lion
+    - publix
+    - h-e-b
+    - hy-vee
+    - meijer
+    - wegmans
+    - equate
+    - up & up
+  # RECALL-6: words that say nothing about which product a recall is about.
+  stop_words: [and, the, with, for, from, original, classic, flavor, flavored, natural,
+               organic, style, brand, size, pack, family, new, made, real, pure, fresh]

@@ -82,6 +82,20 @@ class ProcessingConfig(_Frozen):
     nova_values: dict[int, float]
 
 
+class AlternativesConfig(_Frozen):
+    min_gain: int
+    limit: int
+    min_confidence: float
+    fallback_categories: int
+
+
+class RecallsConfig(_Frozen):
+    window_years: int
+    limit: int
+    generic_brands: list[str]
+    stop_words: list[str]
+
+
 class ScoringConfig(_Frozen):
     engine_version: str
     weights: dict[str, int]
@@ -89,6 +103,8 @@ class ScoringConfig(_Frozen):
     nutriscore: NutriScoreConfig
     additives: AdditivesConfig
     processing: ProcessingConfig
+    alternatives: AlternativesConfig
+    recalls: RecallsConfig
 
 
 def load_config(path: Path = CONFIG_PATH) -> ScoringConfig:
