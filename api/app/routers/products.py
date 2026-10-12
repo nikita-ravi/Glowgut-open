@@ -1,4 +1,4 @@
-"""`GET /products/{gtin}` and `/breakdown` (specs/006)."""
+"""`GET /products/{gtin}`, `/breakdown` (specs/006) and `/alternatives` (specs/009)."""
 
 import hashlib
 from datetime import UTC, datetime
@@ -13,6 +13,7 @@ from app.scoring.config import ScoringConfig, default_config
 from app.scoring.engine import ScoreResult
 from app.scoring.explain import explain
 from app.scoring.types import BreakdownLine
+from app.services.alternatives import find_alternatives
 from app.services.gtin import InvalidGTIN, normalize
 from app.services.lookup import LookupResult, ProductNotFound, lookup
 from app.services.off_client import OFFClient, SourceUnavailable
@@ -148,3 +149,24 @@ async def get_breakdown(
         "explanation": explain(_rehydrate(result.score)),
         "attribution": ATTRIBUTION,
     }
+
+
+@router.get("/{gtin}/alternatives")
+async def get_alternatives(
+    gtin: str,
+    response: Response,
+    session: Session,
+    off: Annotated[OFFClient, Depends(get_off)],
+    cfg: Annotated[ScoringConfig, Depends(default_config)],
+    settings: Annotated[Settings, Depends(get_settings)],
+    now: Annotated[datetime, Depends(get_now)],
+) -> dict[str, Any]:
+    result = await _resolve(gtin, session, off, cfg, settings, now)  # ALT-1
+    category, alternatives = await find_alternatives(session, result.product, result.score, cfg)
+    response.headers["Cache-Control"] = CACHE_CONTROL  # ALT-9: no ETag, the list changes
+    return {
+        "gtin": result.product.gtin,
+        "category": category,
+        "alternatives": alternatives,
+        "attribution": ATTRIBUTION,
+    }  # ALT-7
