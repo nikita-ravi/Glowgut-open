@@ -45,5 +45,5 @@ and noting why; its tests go with it.
 | [004-processing](004-processing.md) | NOVA processing (P component) | implemented |
 | [005-engine](005-engine.md) | Score combination, breakdown contract, bands | implemented |
 | [006-product-lookup](006-product-lookup.md) | `GET /products/{gtin}` and breakdown | implemented |
-| [007-scanner](007-scanner.md) | Camera scanner and manual entry | draft |
-| [008-product-page](008-product-page.md) | Product page and PWA shell | draft |
+| [007-scanner](007-scanner.md) | Camera scanner and manual entry | implemented |
+| [008-product-page](008-product-page.md) | Product page and PWA shell | implemented |

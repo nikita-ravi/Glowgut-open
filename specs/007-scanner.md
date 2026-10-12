@@ -1,6 +1,6 @@
 # 007: Scanner and manual entry
 
-Status: draft
+Status: implemented
 
 The home page (`/`) gets a barcode into the app: by camera, or by typing it.
 

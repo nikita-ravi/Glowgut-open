@@ -1,6 +1,6 @@
 # 008: Product page
 
-Status: draft
+Status: implemented
 
 `/p/<gtin>` shows one product and its score. It reads only from the API (spec 006):
 `GET /products/{gtin}` for product fields and `GET /products/{gtin}/breakdown` for the
