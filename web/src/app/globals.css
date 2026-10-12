@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+:root {
+  /* Light only for v1: component colors are tuned for AA contrast on white. */
+  color-scheme: light;
+  --background: #ffffff;
+  --foreground: #18181b;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
