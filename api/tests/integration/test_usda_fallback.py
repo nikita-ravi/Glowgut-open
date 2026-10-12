@@ -40,8 +40,11 @@ async def test_a_barcode_only_usda_has_is_stored_scored_and_credited(
     assert usda_mock.routes["search"].calls.last.request.url.params["query"] == "00051000198808"
     async with sessionmaker() as s:
         product = await s.get(Product, GTIN)
-        assert product is not None and set(product.source_by_field.values()) == {"usda"}
-        assert product.additives_known is False
+        assert product is not None
+        # Everything is from USDA except the additive list, derived from its ingredients (EST-5).
+        assert product.source_by_field.pop("additives") == "derived"
+        assert set(product.source_by_field.values()) == {"usda"}
+        assert product.additives_known is True
 
 
 @spec("USDA-9")
