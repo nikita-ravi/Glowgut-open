@@ -139,7 +139,8 @@ async def _score(conn: AsyncConnection, items: list[Item], cfg: ScoringConfig) -
         if row["gtin"] in scored:
             continue
         additives = None if codes is None else tuple(info[c] for c in sorted(codes))
-        facts = build_facts(row["nutrition"], row["categories"], row["nova_group"], additives)
+        facts = build_facts(row["nutrition"], row["categories"], row["nova_group"], additives,
+                            row["ingredients_text"])  # fmt: skip
         out = score_row(row["gtin"], score(facts, cfg), with_breakdown=False)
         records.append((
             out["gtin"], out["engine_version"], out["total"], _num(out["nutrition_pts"]),

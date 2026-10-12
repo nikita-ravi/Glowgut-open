@@ -52,3 +52,4 @@ and noting why; its tests go with it.
 | [011-bulk-import](011-bulk-import.md) | Bulk import of US products from the OFF export | implemented |
 | [012-usda](012-usda.md) | USDA FoodData Central: bulk gap-fill and live fallback | implemented |
 | [013-us-additive-status](013-us-additive-status.md) | US regulatory status of additives (FDA) | implemented |
+| [014-ingredient-estimates](014-ingredient-estimates.md) | Fruit/veg share, NOVA and additives estimated from ingredients | implemented |
