@@ -6,7 +6,7 @@ from fastapi import FastAPI
 
 from app import problems
 from app.db.session import make_engine, make_sessionmaker
-from app.routers import products
+from app.routers import products, search
 from app.services.off_client import OFFClient
 from app.services.usda_client import USDAClient
 from app.settings import APP_VERSION, get_settings
@@ -30,6 +30,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(title="Open Food Scanner API", version=APP_VERSION, lifespan=lifespan)
 problems.install(app)
 app.include_router(products.router)
+app.include_router(search.router)
 
 
 @app.get("/health")

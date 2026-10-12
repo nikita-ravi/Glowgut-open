@@ -44,7 +44,7 @@ Feature behaviour is defined in `specs/NNN-*.md` as numbered requirements (`**GT
 ```
 pipeline/        offline data: reference.py (additives), recalls.py (openFDA), off_bulk.py + load.py (bulk OFF import), usda_bulk.py (USDA gap-fill)
 specs/           feature specs with requirement IDs (the source of truth for behaviour)
-api/app/         FastAPI app: main.py, routers/, services/ (gtin, off_client, off_mapping, lookup, alternatives, recalls), db/
+api/app/         FastAPI app: main.py, routers/ (products, search), services/ (gtin, off_client, off_mapping, lookup, alternatives, recalls), db/
 api/app/scoring/ engine.py, nutriscore_2023.py, additives.py, processing.py, explain.py, config.py
 api/migrations/  Alembic migrations
 api/tests/       unit/, integration/ (Docker Postgres, OFF mocked with respx), pipeline/, golden/ (3,000-product ODbL sample; CI enforces >= 99%)

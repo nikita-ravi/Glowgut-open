@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 
 import { ManualEntry } from "./ManualEntry";
 import { Scanner } from "./Scanner";
+import { SearchBox } from "./SearchBox";
 
 export function ScanHome() {
   const router = useRouter();
@@ -12,6 +13,7 @@ export function ScanHome() {
     <div className="flex flex-col gap-6">
       <Scanner onDetected={go} />
       <ManualEntry onSubmit={go} />
+      <SearchBox onSelect={go} />
     </div>
   );
 }
