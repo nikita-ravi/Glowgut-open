@@ -1,3 +1,5 @@
+import { ScanHome } from "@/components/ScanHome";
+
 export default function Home() {
   return (
     <div className="flex flex-col gap-6">
@@ -7,6 +9,10 @@ export default function Home() {
           Scan a grocery barcode to see a 0–100 score. Every point links to its source.
         </p>
       </header>
+      <ScanHome />
+      <p className="text-sm text-zinc-600">
+        Data from Open Food Facts (ODbL). Educational information, not medical advice.
+      </p>
     </div>
   );
 }
