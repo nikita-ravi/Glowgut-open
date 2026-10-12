@@ -1,11 +1,12 @@
 """SQLAlchemy models for SPEC §5. User tables arrive with accounts (M5)."""
 
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import (
     Boolean,
+    Date,
     DateTime,
     ForeignKey,
     Numeric,
@@ -80,3 +81,29 @@ class Score(Base):
     computed_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+
+
+class Recall(Base):
+    """An openFDA food enforcement record within the window (specs/010, RECALL-2)."""
+
+    __tablename__ = "recalls"
+    recall_number: Mapped[str] = mapped_column(Text, primary_key=True)
+    event_id: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[str | None] = mapped_column(Text)
+    classification: Mapped[str | None] = mapped_column(Text)
+    recalling_firm: Mapped[str | None] = mapped_column(Text)
+    product_description: Mapped[str] = mapped_column(Text, default="")
+    code_info: Mapped[str | None] = mapped_column(Text)
+    more_code_info: Mapped[str | None] = mapped_column(Text)
+    reason_for_recall: Mapped[str | None] = mapped_column(Text)
+    recall_initiation_date: Mapped[date | None] = mapped_column(Date)
+    report_date: Mapped[date] = mapped_column(Date)
+    codes: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list)  # GTIN-13s (RECALL-3)
+
+
+class RecallSync(Base):
+    """When each recall source was last synced: the data's `as_of` (RECALL-2)."""
+
+    __tablename__ = "recall_sync"
+    source: Mapped[str] = mapped_column(Text, primary_key=True)
+    as_of: Mapped[datetime] = mapped_column(DateTime(timezone=True))

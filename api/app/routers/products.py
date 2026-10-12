@@ -1,4 +1,4 @@
-"""`GET /products/{gtin}`, `/breakdown` (specs/006) and `/alternatives` (specs/009)."""
+"""`GET /products/{gtin}`, `/breakdown` (specs/006), `/alternatives` (009), `/recalls` (010)."""
 
 import hashlib
 from datetime import UTC, datetime
@@ -17,10 +17,12 @@ from app.services.alternatives import find_alternatives
 from app.services.gtin import InvalidGTIN, normalize
 from app.services.lookup import LookupResult, ProductNotFound, lookup
 from app.services.off_client import OFFClient, SourceUnavailable
+from app.services.recalls import find_recalls, recalls_as_of
 from app.settings import Settings, get_settings
 
 router = APIRouter(prefix="/products", tags=["products"])
 ATTRIBUTION = "Data from Open Food Facts (ODbL)"
+RECALL_ATTRIBUTION = "Recall data from openFDA (FDA)"
 CACHE_CONTROL = "public, max-age=300"
 
 Session = Annotated[AsyncSession, Depends(get_session)]
@@ -170,3 +172,23 @@ async def get_alternatives(
         "alternatives": alternatives,
         "attribution": ATTRIBUTION,
     }  # ALT-7
+
+
+@router.get("/{gtin}/recalls")
+async def get_recalls(
+    gtin: str,
+    response: Response,
+    session: Session,
+    off: Annotated[OFFClient, Depends(get_off)],
+    cfg: Annotated[ScoringConfig, Depends(default_config)],
+    settings: Annotated[Settings, Depends(get_settings)],
+    now: Annotated[datetime, Depends(get_now)],
+) -> dict[str, Any]:
+    result = await _resolve(gtin, session, off, cfg, settings, now)  # RECALL-8
+    response.headers["Cache-Control"] = "public, max-age=3600"  # RECALL-11: no ETag
+    return {
+        "gtin": result.product.gtin,
+        "recalls": await find_recalls(session, result.product, cfg.recalls),
+        "as_of": await recalls_as_of(session),
+        "attribution": RECALL_ATTRIBUTION,
+    }
