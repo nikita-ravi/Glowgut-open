@@ -39,3 +39,4 @@ and noting why; its tests go with it.
 | Spec | Area | Status |
 | --- | --- | --- |
 | [001-gtin](001-gtin.md) | Barcode normalization and validation | implemented |
+| [002-nutriscore-2023](002-nutriscore-2023.md) | Nutri-Score 2023 port (N component input) | implemented |

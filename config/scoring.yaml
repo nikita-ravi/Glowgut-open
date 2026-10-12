@@ -1,0 +1,149 @@
+# Scoring configuration. Any change here must bump engine_version and add a
+# changelog line in specs/005-engine.md.
+engine_version: "0.1.0"
+
+weights:
+  nutrition: 60
+  additives: 30
+  processing: 10
+
+bands: # inclusive lower bounds, checked from the top
+  - {id: excellent, label: Excellent, min: 75}
+  - {id: good, label: Good, min: 50}
+  - {id: mediocre, label: Mediocre, min: 25}
+  - {id: poor, label: Poor, min: 0}
+
+nutriscore:
+  source_urls:
+    foods: https://mpc.gouvernement.lu/dam-assets/le-minist%C3%A8re/consodur/2022-main-algorithm-report-update-final.pdf
+    beverages: https://edepot.wur.nl/629571
+
+  # Class detection (NS-1): first matching class wins, in this order.
+  classes:
+    water:
+      - en:waters
+      - en:spring-waters
+      - en:mineral-waters
+      - en:unsweetened-natural-waters
+    water_exclude: # a water with any of these tags is scored as a beverage
+      - en:flavored-waters
+      - en:sweetened-waters
+    beverage:
+      - en:beverages
+      - en:milks
+      - en:plant-based-milks
+      - en:dairy-drinks
+    beverage_exclude: # these are never beverages, even when tagged so
+      - en:alcoholic-beverages
+      - en:plant-based-yogurts
+      - en:beverage-preparations
+    cheese:
+      - en:cheeses
+    fats_oils_nuts_seeds:
+      - en:fats
+      - en:vegetable-oils
+      - en:olive-oils
+      - en:butters
+      - en:margarines
+      - en:creams
+      - en:nuts
+      - en:seeds
+      - en:peanuts
+      - en:nut-butters
+      - en:peanut-butters
+    fats_oils_nuts_seeds_exclude:
+      - en:chestnuts
+
+  red_meat_tags: # NS-2
+    - en:beef
+    - en:veal-meat
+    - en:pork
+    - en:lamb-meat
+    - en:mutton
+    - en:game-meat
+    - en:horse-meat
+    - en:goat-meat
+    - en:beef-products
+    - en:pork-products
+
+  non_nutritive_sweeteners: # E-numbers that trigger the beverage NNS points (NS-7)
+    - e950
+    - e951
+    - e952
+    - e954
+    - e955
+    - e957
+    - e959
+    - e960
+    - e960a
+    - e961
+    - e962
+    - e969
+
+  # Point tables. A value strictly greater than thresholds[i] earns i+1 points (NS-8).
+  general:
+    energy_kj: [335, 670, 1005, 1340, 1675, 2010, 2345, 2680, 3015, 3350]
+    sugars_g: [3.4, 6.8, 10, 14, 17, 20, 24, 27, 31, 34, 37, 41, 44, 48, 51]
+    saturated_fat_g: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    salt_g: [0.2, 0.4, 0.6, 0.8, 1, 1.2, 1.4, 1.6, 1.8, 2, 2.2, 2.4, 2.6, 2.8, 3, 3.2, 3.4, 3.6, 3.8, 4]
+    proteins_g: [2.4, 4.8, 7.2, 9.6, 12, 14, 17]
+    fiber_g: [3.0, 4.1, 5.2, 6.3, 7.4]
+    fvl_percent: # [threshold, points]
+      - [40, 1]
+      - [60, 2]
+      - [80, 5]
+    protein_cutoff_a_points: 11 # NS-12
+    red_meat_max_protein_points: 2 # NS-11
+    grades: # upper bounds, inclusive (NS-17)
+      a: 0
+      b: 2
+      c: 10
+      d: 18
+
+  fats_oils_nuts_seeds:
+    energy_from_saturates_kj: [120, 240, 360, 480, 600, 720, 840, 960, 1080, 1200]
+    kj_per_g_saturates: 37
+    # Ratio bands use >= on lower bounds (NS-8): ratio >= 10 -> 1 point ... >= 64 -> 10.
+    saturates_ratio_percent: [10, 16, 22, 28, 34, 40, 46, 52, 58, 64]
+    protein_cutoff_a_points: 7 # NS-14
+    grades:
+      a: -6
+      b: 2
+      c: 10
+      d: 18
+
+  beverage:
+    energy_kj: [30, 90, 150, 210, 240, 270, 300, 330, 360, 390]
+    sugars_g: [0.5, 2, 3.5, 5, 6, 7, 8, 9, 10, 11]
+    proteins_g: [1.2, 1.5, 1.8, 2.1, 2.4, 2.7, 3.0]
+    fvl_percent:
+      - [40, 2]
+      - [60, 4]
+      - [80, 6]
+    sweeteners_points: 4
+    grades: # no A: only water is A (NS-19)
+      b: 2
+      c: 6
+      d: 9
+
+additives:
+  risk_penalty: # by risk_level (ADD-2)
+    0: 0.0
+    1: 0.05
+    2: 0.15
+    3: 0.40
+  evidence_weight: # by evidence_grade
+    A: 1.0
+    B: 0.6
+    C: 0.3
+  cap_total: 49 # ADD-5
+  efsa_source: https://www.efsa.europa.eu/en/topics/topic/food-additive-re-evaluations
+  off_facet_url: https://world.openfoodfacts.org/facets/additives/{code}
+
+processing:
+  source_url: https://world.openfoodfacts.org/nova
+  nova_values:
+    1: 1.0
+    2: 0.67
+    3: 0.33
+    4: 0.0
