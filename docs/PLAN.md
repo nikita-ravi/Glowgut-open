@@ -14,7 +14,7 @@ Every task follows the spec-driven workflow in `specs/README.md`: spec first, th
 - [x] Alembic set up; first migration creates the tables in SPEC §5 (auth tables come later)
 - [x] `config/scoring.yaml` skeleton with `engine_version: "0.1.0"`
 - [x] GitHub Actions: lint + test on PR (Postgres service container)
-- [ ] `web/`: Next.js + TS + Tailwind scaffold (empty page), pnpm, eslint *(moved to M3)*
+- [x] `web/`: Next.js + TS + Tailwind scaffold (empty page), pnpm, eslint *(moved to M3)*
 
 **Done when:** `docker compose up -d db && uv run alembic upgrade head && uv run pytest` passes on a clean clone, and CI is green.
 
@@ -50,12 +50,12 @@ Every task follows the spec-driven workflow in `specs/README.md`: spec first, th
 
 ## M3: Scanner + product page (weeks 5–6)
 
-- [ ] PWA manifest + service worker (offline shell only); installable on iOS/Android
-- [ ] Scanner page: `barcode-detector` polyfill, camera permission UX, torch toggle where supported, manual entry fallback
-- [ ] Product page: score + band (text label + color), component bars, breakdown list with source links, ingredients, additives (grade + US status), completeness badge, attribution + "not medical advice" footer
+- [x] PWA manifest + service worker (offline shell only); installable on iOS/Android
+- [x] Scanner page: `barcode-detector` polyfill, camera permission UX, torch toggle where supported, manual entry fallback
+- [x] Product page: score + band (text label + color), component bars, breakdown list with source links, ingredients, additives (grade + US status), completeness badge, attribution + "not medical advice" footer *(US regulatory status shows once FDA data is loaded)*
 - [ ] `GET /products/{gtin}/alternatives` + an alternatives strip
 - [ ] Recall banner from openFDA (cached daily, matched on brand + product name)
-- [ ] Playwright e2e: scan-by-entry → product page → breakdown → alternative
+- [ ] Playwright e2e: scan-by-entry → product page → breakdown → alternative *(done except the alternative step; axe check and offline shell also covered)*
 
 **Done when:** scan-to-result is under 3 s on a mid-range phone over 4G (cache hit), and axe reports no WCAG 2.1 AA violations on the product page.
 

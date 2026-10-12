@@ -9,7 +9,7 @@ Full spec: `docs/SPEC.md`. Build order and acceptance criteria: `docs/PLAN.md`. 
 Feature behaviour is defined in `specs/NNN-*.md` as numbered requirements (`**GTIN-3**`). Workflow is in `specs/README.md`:
 
 1. Write or edit the spec first. New specs start as `Status: draft` and need human review before code.
-2. Tag every test with the requirement IDs it covers: `@spec("GTIN-3")` (alias for `pytest.mark.spec`).
+2. Tag every test with the requirement IDs it covers: `@spec("GTIN-3")` in Python, `[GTIN-3]` in web test titles.
 3. Implement until the tests pass, then set the spec to `implemented`.
 
 `api/tests/test_spec_traceability.py` fails CI if an approved or implemented requirement has no test, or a test cites an unknown ID. Never renumber IDs. Retire them with `~~strikethrough~~`.
@@ -64,7 +64,10 @@ uv run python -m pipeline.reference           # load the additives table from th
 uv run pytest                                 # unit + integration + spec traceability
 uv run ruff check . && uv run ruff format --check . && uv run mypy api pipeline   # lint and types
 uv run fastapi dev api/app/main.py            # API on :8000
-cd web && pnpm dev                            # PWA on :3000 (not scaffolded yet)
+cd web && corepack pnpm@10.18.3 install       # web deps (also copies the ZXing .wasm into public/)
+cd web && pnpm dev                            # PWA on :3000; reads API_URL (default http://localhost:8000)
+cd web && pnpm test && pnpm lint && pnpm typecheck   # Vitest, ESLint, tsc (with Next route typegen)
+cd web && pnpm e2e                            # Playwright: own API on :8001 + prod build on :3100, DB ofs_test
 ```
 
 Update this section as soon as a command changes.
@@ -82,6 +85,9 @@ Update this section as soon as a command changes.
 ## Gotchas
 
 - `fastapi[standard]` pulls in an OpenTelemetry exporter. Don't use it: depend on `fastapi`, `fastapi-cli` and `uvicorn[standard]` instead (privacy rule 6).
+- This is Next.js 16: read `web/node_modules/next/dist/docs/` before writing Next code. With Cache Components on, route `params` are request-time data and must be read inside `<Suspense>`.
+- Next 16 keeps the previous route mounted but hidden after navigation. In Playwright, scope text queries (e.g. to `footer`) or they match the hidden page too.
+- `barcode-detector` fetches its WASM from jsDelivr by default. `src/lib/detector.ts` overrides that to `/zxing/`; keep it that way (spec 007, SCAN-11).
 - OFF taxonomy properties are keyed by language (`{"en": "en:high"}`). Unwrap them; don't expect plain strings.
 - The OFF Parquet file is ~4.2 GB. Query it with DuckDB in place. Never load it whole into Python memory or into Postgres.
 - In OFF, US products may be stored with 12- or 13-digit codes. Look up both forms.
