@@ -1,9 +1,11 @@
 """Build the `additives` table from the Open Food Facts additives taxonomy (specs/003).
 
-Usage: uv run python -m pipeline.reference
-FDA status and OpenFoodTox ADI values are added in M1; until then those columns stay null.
+Usage: uv run python -m pipeline.reference [--refresh]
+US status comes from FDA's Substances Added to Food inventory (specs/013). EFSA's
+OpenFoodTox is not imported (CC BY-ND); ADIs come from the taxonomy.
 """
 
+import argparse
 import asyncio
 import json
 from decimal import Decimal, InvalidOperation
@@ -17,6 +19,7 @@ from sqlalchemy.dialects.postgresql import insert
 from app.db.models import Additive
 from app.db.session import make_engine, make_sessionmaker
 from app.settings import get_settings
+from pipeline import fda_status
 
 TAXONOMY_URL = "https://static.openfoodfacts.org/data/taxonomies/additives.json"
 CACHE = Path("data/reference/additives.json")
@@ -80,11 +83,30 @@ async def upsert(rows: list[dict[str, Any]], database_url: str) -> None:
     await engine.dispose()
 
 
+def add_us_status(rows: list[dict[str, Any]], index: dict[str, fda_status.UsStatus]) -> int:
+    """Set us_status and fda_cfr_ref from the FDA inventory by name (FDA-3). Returns matches."""
+    matched = 0
+    for row in rows:
+        status = index.get(fda_status.additive_name(row["name"]))
+        row["us_status"] = status.status if status else None
+        row["fda_cfr_ref"] = status.cfr_ref if status else None
+        matched += status is not None
+    return matched
+
+
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--refresh", action="store_true", help="re-download the FDA inventory")
+    args = parser.parse_args()
+    settings = get_settings()
     rows = [parse_entry(tag, entry) for tag, entry in load_taxonomy().items()]
-    asyncio.run(upsert(rows, get_settings().database_url))
+    if args.refresh or not fda_status.CACHE.exists():
+        fda_status.download(settings.user_agent)
+    us = add_us_status(rows, fda_status.load())
+    asyncio.run(upsert(rows, settings.database_url))
     rated = sum(1 for r in rows if r["risk_level"] is not None)
-    print(f"additives: {len(rows)} loaded, {rated} with an EFSA overexposure rating")
+    print(f"additives: {len(rows)} loaded, {rated} with an EFSA overexposure rating, "
+          f"{us} with a US status (FDA)")  # FDA-4  # fmt: skip
 
 
 if __name__ == "__main__":

@@ -105,7 +105,7 @@ export function ProductView({
 }) {
   const { score } = product;
   const badge = dataBadge(score.confidence);
-  const groups = groupBreakdown(breakdown.score);
+  const groups = groupBreakdown(breakdown.score, product.additives);
   const missing = missingWords(score.missing_inputs);
 
   return (
@@ -192,6 +192,21 @@ export function ProductView({
                       </p>
                       <p className="text-zinc-700">{line.value}</p>
                       {line.note && <p className="text-zinc-600">{line.note}</p>}
+                      {line.usStatus && (
+                        <p className="text-zinc-700">
+                          {line.usStatus.text}
+                          {line.usStatus.cfrUrl && (
+                            <>
+                              {" "}
+                              (
+                              <a className="underline" href={line.usStatus.cfrUrl}>
+                                {line.usStatus.cfr}
+                              </a>
+                              )
+                            </>
+                          )}
+                        </p>
+                      )}
                     </div>
                     <div className="shrink-0 text-right">
                       <p className="font-medium tabular-nums">

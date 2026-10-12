@@ -230,3 +230,22 @@ async def test_product_without_salt_is_not_scored(
     body = (await client.get(f"/products/{GTIN}")).json()
     assert body["score"]["status"] == "not_scored" and body["score"]["total"] is None
     assert {"salt_g", "sugars_g"} <= set(body["score"]["missing_inputs"])
+
+
+@spec("FDA-5")
+async def test_product_lists_its_additives_with_us_status(
+    client: httpx.AsyncClient, off_mock: respx.MockRouter, sessionmaker: Maker
+) -> None:
+    async with sessionmaker() as s:
+        await s.execute(text(
+            "UPDATE additives SET us_status = 'food_additive', fda_cfr_ref = '172.170' "
+            "WHERE code = 'e250'"
+        ))  # fmt: skip
+        await s.commit()
+    route13(off_mock).respond(200, json=off_product())
+    body = (await client.get(f"/products/{GTIN}")).json()
+    assert body["additives"] == [
+        {"code": "e250", "name": "E250 - Sodium nitrite", "us_status": "food_additive",
+         "fda_cfr_ref": "172.170"},
+        {"code": "e330", "name": "E330 - Citric acid", "us_status": None, "fda_cfr_ref": None},
+    ]  # fmt: skip
