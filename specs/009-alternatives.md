@@ -1,6 +1,6 @@
 # 009: Alternatives
 
-Status: draft
+Status: implemented
 
 The product page suggests up to five better-scored products from the same category (SPEC F5).
 Alternatives come only from products already in our database. Until the bulk pipeline lands,

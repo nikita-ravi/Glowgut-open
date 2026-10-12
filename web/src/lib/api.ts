@@ -1,4 +1,4 @@
-// Typed client for the FastAPI backend (spec 006). Server-side only: it reads API_URL.
+// Typed client for the FastAPI backend (specs 006, 009, 010). Server-side only: it reads API_URL.
 
 export type Component = "nutrition" | "additives" | "processing";
 
@@ -41,6 +41,39 @@ export interface Breakdown {
   gtin: string;
   score: Score & { breakdown: BreakdownLine[] };
   explanation: string[];
+}
+
+export interface Alternative {
+  gtin: string;
+  name: string | null;
+  brand: string | null;
+  image_url: string | null;
+  total: number;
+  band: { id: string; label: string } | null;
+  confidence: number;
+}
+
+export interface Alternatives {
+  gtin: string;
+  category: string | null;
+  alternatives: Alternative[];
+}
+
+export interface Recall {
+  recall_number: string;
+  match: "code" | "brand_name";
+  classification: string | null;
+  status: string | null;
+  reason_for_recall: string | null;
+  recall_initiation_date: string | null;
+  product_description: string;
+  url: string;
+}
+
+export interface Recalls {
+  gtin: string;
+  recalls: Recall[];
+  as_of: string | null;
 }
 
 export type ProductResult =
@@ -87,4 +120,22 @@ export async function loadProduct(
   } catch {
     return { kind: "unavailable" };
   }
+}
+
+/** Extras on the product page: any failure gives null, so the page still renders. */
+async function optionalJson<T>(path: string, fetcher: typeof fetch): Promise<T | null> {
+  try {
+    const res = await getJson(path, fetcher);
+    return res.ok ? ((await res.json()) as T) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function loadAlternatives(gtin: string, fetcher: typeof fetch = fetch) {
+  return optionalJson<Alternatives>(`/products/${encodeURIComponent(gtin)}/alternatives`, fetcher);
+}
+
+export function loadRecalls(gtin: string, fetcher: typeof fetch = fetch) {
+  return optionalJson<Recalls>(`/products/${encodeURIComponent(gtin)}/recalls`, fetcher);
 }

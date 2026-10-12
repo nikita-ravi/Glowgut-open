@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import type { Breakdown, Product } from "@/lib/api";
+import type { Alternatives, Breakdown, Product, Recalls } from "@/lib/api";
 import {
   bandStyle,
   classLabel,
@@ -10,6 +10,9 @@ import {
   isRescaled,
   missingWords,
 } from "@/lib/present";
+
+import { AlternativesStrip } from "./AlternativesStrip";
+import { RecallBanner } from "./RecallBanner";
 
 const BADGE_STYLES = {
   complete: "bg-emerald-50 text-emerald-900",
@@ -89,7 +92,17 @@ function ComponentBars({ product }: { product: Product }) {
   );
 }
 
-export function ProductView({ product, breakdown }: { product: Product; breakdown: Breakdown }) {
+export function ProductView({
+  product,
+  breakdown,
+  alternatives,
+  recalls,
+}: {
+  product: Product;
+  breakdown: Breakdown;
+  alternatives?: Alternatives | null;
+  recalls?: Recalls | null;
+}) {
   const { score } = product;
   const badge = dataBadge(score.confidence);
   const groups = groupBreakdown(breakdown.score);
@@ -120,6 +133,8 @@ export function ProductView({ product, breakdown }: { product: Product; breakdow
         </div>
       </header>
 
+      <RecallBanner data={recalls} />
+
       <ScoreHeader product={product} />
 
       <div className="flex flex-wrap gap-2 text-sm">
@@ -148,6 +163,8 @@ export function ProductView({ product, breakdown }: { product: Product; breakdow
           ))}
         </ul>
       </section>
+
+      <AlternativesStrip data={alternatives} />
 
       <ComponentBars product={product} />
 

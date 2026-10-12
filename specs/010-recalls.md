@@ -1,6 +1,6 @@
 # 010: Recall banner
 
-Status: draft
+Status: implemented
 
 The product page shows a banner when an openFDA food enforcement (recall) record matches the
 product (SPEC F9). openFDA is not a live alert feed, and our matching can't be certain, so the copy

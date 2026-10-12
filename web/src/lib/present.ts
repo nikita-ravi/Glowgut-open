@@ -206,3 +206,19 @@ export function groupBreakdown(score: Score & { breakdown: BreakdownLine[] }) {
       .map((l) => lineView(l, weights)),
   }));
 }
+
+/** "en:breakfast-cereals" → "In breakfast cereals" (ALT-12). */
+export function categoryWords(tag: string): string {
+  const words = tag.replace(/^[a-z]{2}:/, "").replace(/-/g, " ").trim().toLowerCase();
+  return `In ${words}`;
+}
+
+/** "2026-08-01" or an ISO timestamp → "Aug 1, 2026". */
+export function formatDate(iso: string): string {
+  return new Date(`${iso.slice(0, 10)}T00:00:00Z`).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+}
