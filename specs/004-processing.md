@@ -1,6 +1,6 @@
 # 004: Processing (P component)
 
-Status: draft
+Status: implemented
 
 ## Requirements
 

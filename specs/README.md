@@ -41,4 +41,5 @@ and noting why; its tests go with it.
 | [001-gtin](001-gtin.md) | Barcode normalization and validation | implemented |
 | [002-nutriscore-2023](002-nutriscore-2023.md) | Nutri-Score 2023 port (N component input) | implemented |
 | [003-additives](003-additives.md) | Additive penalty (A component) | implemented |
-| [004-processing](004-processing.md) | NOVA processing (P component) | draft |
+| [004-processing](004-processing.md) | NOVA processing (P component) | implemented |
+| [005-engine](005-engine.md) | Score combination, breakdown contract, bands | implemented |
