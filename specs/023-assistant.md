@@ -92,6 +92,24 @@ Without a key, or when Groq fails, the keyword rules below do the same job.
   assistant asks "Which {words} do you mean? For example: A, B or C." using the top three search
   results, instead of picking one. With fewer than two results it answers as usual.
 
+## Speech to text with Whisper (Groq free tier)
+
+- **ASSIST-18** `POST /api/assistant/transcribe` (Next route, server-side) takes one recorded
+  clip as `multipart/form-data` field `audio` (at most 4 MB, else 413) and sends only that clip
+  to Groq's `audio/transcriptions` with `GROQ_API_KEY`, model `GROQ_STT_MODEL` (default
+  `whisper-large-v3-turbo`), English, temperature 0, and a short prompt of grocery brand names.
+  It returns `{text}`. No key → 404; Groq error, timeout (15 s) or empty text → 503; at most 20
+  clips a minute per client address (→ 429). `GET` returns `{enabled}` (whether a key is set).
+- **ASSIST-19** On the assistant page, when the route is enabled and the browser can record
+  (`MediaRecorder` and `getUserMedia`), the mic records instead of using `SpeechRecognition`:
+  tap to start, tap again to stop, and it stops on its own after 12 seconds. The clip is
+  transcribed and asked like a typed question. The one-time notice (VOICE-7) says the recording
+  is sent to Groq. Audio is never stored.
+- **ASSIST-20** Every failure falls back: no key, no `MediaRecorder` or a refused microphone →
+  the browser's `SpeechRecognition` path (ASSIST-10) or typing; a failed transcription → "I
+  couldn't make that out. Try again, or type your question." The product page's voice panel
+  (spec 022) is unchanged.
+
 ## Later (production, not built here)
 
 An LLM using tools over the same API (search, product, alternatives) to handle multi-turn
