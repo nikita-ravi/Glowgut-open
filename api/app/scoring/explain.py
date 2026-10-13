@@ -27,9 +27,16 @@ def _nutrient(line: BreakdownLine) -> tuple[str, str]:
     return NUTRIENT_LABELS.get(key, (key, ""))
 
 
+def display_number(value: float, unit: str) -> str:
+    """Rounded for reading (ENGINE-13): kJ whole; g and % to 1 decimal, or 2 below 1."""
+    digits = 0 if unit == "kJ" else 2 if abs(value) < 1 else 1
+    text = f"{value:.{digits}f}"
+    return text.rstrip("0").rstrip(".") if "." in text else text
+
+
 def _fmt(value: object, unit: str) -> str:
-    if isinstance(value, float) and value.is_integer():
-        value = int(value)
+    if isinstance(value, int | float) and not isinstance(value, bool):
+        value = display_number(float(value), unit)
     return f"{value} {unit}".strip() if unit != "%" else f"{value}%"
 
 

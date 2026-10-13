@@ -105,9 +105,15 @@ export function isRescaled(score: Score): boolean {
   return Object.values(score.components).some((c) => !c.known);
 }
 
-function formatNumber(value: unknown): string {
+/** Rounded for reading (PAGE-15, ENGINE-13): kJ whole; g and % to 1 decimal, or 2 below 1. */
+export function displayNumber(value: number, unit: string): string {
+  const digits = unit === "kJ" ? 0 : Math.abs(value) < 1 ? 2 : 1;
+  return String(Number(value.toFixed(digits)));
+}
+
+function formatNumber(value: unknown, unit = ""): string {
   if (typeof value === "number") {
-    return Number.isInteger(value) ? String(value) : String(Math.round(value * 100) / 100);
+    return unit ? displayNumber(value, unit) : String(Math.round(value * 100) / 100);
   }
   if (typeof value === "boolean") return value ? "Yes" : "No";
   return String(value ?? "");
@@ -136,7 +142,7 @@ export function lineView(line: BreakdownLine, weights: Record<Component, number>
     const key = line.rule_id.split(".").at(-1) ?? "";
     const n = NUTRIENTS[key];
     const unit = n?.unit ?? "";
-    const value = formatNumber(line.input_value);
+    const value = formatNumber(line.input_value, unit);
     const signed = line.points > 0 ? `+${line.points}` : String(line.points);
     return {
       ...base,
@@ -192,6 +198,13 @@ export function lineView(line: BreakdownLine, weights: Record<Component, number>
   };
 }
 
+/** Why a component has no lines (PAGE-16). */
+export function emptyComponentText(score: Score, component: Component): string {
+  return component === "additives" && score.components.additives.known
+    ? "No additives found in the ingredient list."
+    : "No data.";
+}
+
 export function groupBreakdown(score: Score & { breakdown: BreakdownLine[] }) {
   const weights = {
     nutrition: score.components.nutrition.weight,
@@ -201,6 +214,7 @@ export function groupBreakdown(score: Score & { breakdown: BreakdownLine[] }) {
   return (Object.keys(COMPONENT_LABELS) as Component[]).map((component) => ({
     component,
     label: COMPONENT_LABELS[component],
+    emptyText: emptyComponentText(score, component),
     lines: score.breakdown
       .filter((l) => l.component === component && !l.rule_id.startsWith("component."))
       .map((l) => lineView(l, weights)),

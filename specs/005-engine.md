@@ -25,6 +25,7 @@ category tags, NOVA group, the additive list (or `None` if unknown), and
 - **ENGINE-10** `confidence` = share of the scoring inputs that are present and not estimated, rounded to 2 decimals. Inputs counted: the 4 required nutrients, fibre, protein, fvl, NOVA, additive list.
 - **ENGINE-11** The output carries `engine_version` from the config.
 - **ENGINE-12** `explain(result)` turns a result into plain sentences from templates only. It never says "toxic", "dangerous" or "unsafe".
+- **ENGINE-13** Numbers in sentences are rounded for reading: kJ to a whole number; grams and percentages to 1 decimal, or 2 decimals below 1. Trailing zeros are dropped. Rounding is display-only: stored inputs and points are unchanged.
 
 ## Output contract
 
