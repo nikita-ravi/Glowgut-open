@@ -25,6 +25,7 @@ class ClassTags(_Frozen):
     beverage: list[str]
     beverage_exclude: list[str]
     cheese: list[str]
+    cheese_exclude: list[str]
     fats_oils_nuts_seeds: list[str]
     fats_oils_nuts_seeds_exclude: list[str]
 
@@ -111,6 +112,11 @@ class RecallsConfig(_Frozen):
     stop_words: list[str]
 
 
+class NutriScoreCap(_Frozen):
+    grades: list[str]
+    total: int
+
+
 class ChangelogEntry(_Frozen):
     version: str
     change: str
@@ -119,6 +125,8 @@ class ChangelogEntry(_Frozen):
 class ScoringConfig(_Frozen):
     engine_version: str
     weights: dict[str, int]
+    nutrition_anchors: dict[str, float]
+    nutriscore_cap: NutriScoreCap
     bands: list[Band]
     nutriscore: NutriScoreConfig
     additives: AdditivesConfig

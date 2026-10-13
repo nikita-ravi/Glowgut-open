@@ -70,6 +70,16 @@ function ScoreHeader({ product }: { product: Product }) {
   );
 }
 
+/** PAGE-17: full additive marks mean no EFSA-rated risk, not no additives. */
+function unratedNote(product: Product): string | null {
+  const additives = product.score.components.additives;
+  const count = product.additives?.length ?? 0;
+  if (!additives.known || additives.value !== 1 || count === 0) return null;
+  return count === 1
+    ? "Its 1 additive has no EFSA risk rating."
+    : `None of its ${count} additives has an EFSA risk rating.`;
+}
+
 function ComponentBars({ product }: { product: Product }) {
   const bars = componentBars(product.score);
   return (
@@ -93,6 +103,9 @@ function ComponentBars({ product }: { product: Product }) {
                 style={{ width: `${Math.round(bar.fraction * 100)}%` }}
               />
             </div>
+            {bar.component === "additives" && unratedNote(product) && (
+              <p className="mt-1 text-sm text-zinc-600">{unratedNote(product)}</p>
+            )}
           </li>
         ))}
       </ul>

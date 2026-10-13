@@ -14,7 +14,7 @@ test("[SCAN-1] [SCAN-9] [PAGE-1] type a barcode, see the scored product and its 
   await expect(page).toHaveURL(`/p/${GTIN}`);
   await expect(page.getByRole("heading", { name: "Crunchy Oat Bars" })).toBeVisible();
   await expect(page.getByText("/ 100", { exact: true })).toBeVisible();
-  await expect(page.getByText("Mediocre", { exact: true })).toBeVisible(); // capped at 49 by E250 (ADD-5)
+  await expect(page.getByText("Mediocre", { exact: true })).toBeVisible(); // 41: a D grade, and E250 caps it (ADD-5, ENGINE-14)
   await expect(page.getByRole("heading", { name: "Every rule applied" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Source for Sugars" })).toHaveAttribute(
     "href",
