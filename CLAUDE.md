@@ -34,7 +34,7 @@ Feature behaviour is defined in `specs/NNN-*.md` as numbered requirements (`**GT
 | Barcode | `barcode-detector` (BarcodeDetector polyfill on ZXing-C++ WASM). Do NOT use `html5-qrcode` (unmaintained) |
 | OCR | Robotoff nutrition extraction API first, Tesseract.js fallback in the browser |
 | Auth | Better Auth |
-| Voice (phase 1.5) | Web Speech API for STT; `kokoro-js` (Apache-2.0) for TTS, in the browser |
+| Voice | Web Speech API: `SpeechRecognition` (opt-in, after a notice) and `speechSynthesis`. Not `kokoro-js`: its phonemizer bundles GPL-3.0 eSpeak NG |
 | Python tooling | `uv`, `pytest`, `ruff`, `mypy` |
 | JS tooling | `pnpm`, `eslint`, `vitest`, Playwright for e2e |
 | CI | GitHub Actions (tests + lint on PR; weekly data refresh cron) |
