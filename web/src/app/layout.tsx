@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 
 import Link from "next/link";
+import { Suspense } from "react";
 
 import { RegisterServiceWorker } from "@/components/RegisterServiceWorker";
 import { UserMenu } from "@/components/UserMenu";
@@ -28,7 +29,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <Link href="/" className="font-semibold">
             Open Food Scanner
           </Link>
-          <UserMenu />
+          {/* Reads the URL (to return after sign-in), so it must be inside Suspense. */}
+          <Suspense fallback={null}>
+            <UserMenu />
+          </Suspense>
         </header>
         <main className="mx-auto w-full max-w-xl flex-1 px-4 py-6">{children}</main>
         <RegisterServiceWorker />
