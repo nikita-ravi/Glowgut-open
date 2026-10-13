@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { ScanHome } from "@/components/ScanHome";
 
 export default function Home() {
@@ -10,6 +12,20 @@ export default function Home() {
         </p>
       </header>
       <ScanHome />
+      <Link
+        href="/assistant"
+        className="flex items-center gap-3 rounded-xl p-4 ring-1 ring-zinc-200 hover:ring-zinc-400"
+      >
+        <span aria-hidden="true" className="text-2xl">
+          🎤
+        </span>
+        <span>
+          <span className="block font-medium">Ask the assistant</span>
+          <span className="block text-sm text-zinc-600">
+            &ldquo;I&apos;m diabetic. Can I eat Pringles?&rdquo;
+          </span>
+        </span>
+      </Link>
     </div>
   );
 }
