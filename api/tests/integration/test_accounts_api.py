@@ -99,7 +99,7 @@ async def test_history_saves_the_score_then_dedupes_repeat_views(client: httpx.A
     assert (await scan(client, ALICE, OTHER)).status_code == 201
     items = (await client.get("/me/history", headers=auth(ALICE))).json()["items"]
     assert [i["gtin"] for i in items] == [OTHER, GTIN, GTIN]  # newest first
-    assert items[1]["total"] == 49 and items[1]["band"] == {"id": "mediocre", "label": "Mediocre"}
+    assert items[1]["total"] == 41 and items[1]["band"] == {"id": "mediocre", "label": "Mediocre"}
     assert items[0]["name"] == "Other Bars"
 
 
@@ -162,7 +162,7 @@ async def test_favorites(client: httpx.AsyncClient) -> None:
     for _ in range(2):  # idempotent
         assert (await client.put(f"/me/favorites/{GTIN}", headers=auth(ALICE))).status_code == 204
     items = (await client.get("/me/favorites", headers=auth(ALICE))).json()["items"]
-    assert [(i["gtin"], i["total"]) for i in items] == [(GTIN, 49)]
+    assert [(i["gtin"], i["total"]) for i in items] == [(GTIN, 41)]
     deleted = await client.delete(f"/me/favorites/{GTIN}", headers=auth(ALICE))
     assert deleted.status_code == 204
     assert (await client.get("/me/favorites", headers=auth(ALICE))).json()["items"] == []

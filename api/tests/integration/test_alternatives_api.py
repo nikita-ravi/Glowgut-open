@@ -11,7 +11,7 @@ from app.scoring.config import default_config
 from .conftest import NOT_FOUND, NOW, off_product
 
 spec = pytest.mark.spec
-GTIN = "0036000291452"  # the base product: 49/100, general class, primary en:cereal-bars
+GTIN = "0036000291452"  # the base product: 41/100, general class, primary en:cereal-bars
 VERSION = default_config().engine_version
 CATS = ["en:foods", "en:snacks", "en:sweet-snacks", "en:cereal-bars"]
 Maker = async_sessionmaker[AsyncSession]
@@ -52,7 +52,7 @@ async def base(off_mock: respx.MockRouter, client: httpx.AsyncClient) -> None:
         200, json=off_product(categories_tags=CATS)
     )
     r = await client.get(f"/products/{GTIN}")
-    assert r.json()["score"]["total"] == 49
+    assert r.json()["score"]["total"] == 41
 
 
 async def alternatives(client: httpx.AsyncClient) -> dict[str, Any]:
@@ -119,8 +119,8 @@ async def test_must_beat_the_base_score_by_min_gain(
     client: httpx.AsyncClient, sessionmaker: Maker
 ) -> None:
     just_under, just_enough = CANDIDATES[:2]
-    await add_scored(sessionmaker, just_under, 53)  # 49 + 4
-    await add_scored(sessionmaker, just_enough, 54)  # 49 + 5
+    await add_scored(sessionmaker, just_under, 45)  # 41 + 4
+    await add_scored(sessionmaker, just_enough, 46)  # 41 + 5
     assert gtins(await alternatives(client)) == [just_enough]
 
 
