@@ -77,6 +77,8 @@ def explain(result: ScoreResult) -> list[str]:
             out.append(f"Processing: {ln.note}")
 
     estimated = sorted({_nutrient(ln)[0] for ln in nutrition if ln.estimated})
+    if any(ln.rule_id == "processing.nova" and ln.estimated for ln in result.breakdown):
+        estimated.append("processing level")  # EST-7
     if estimated:
         out.append(f"Estimated from the ingredient list: {', '.join(estimated)}.")
     if missing and result.status == "scored":

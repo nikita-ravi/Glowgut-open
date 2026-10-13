@@ -41,6 +41,7 @@ class ProductFacts:
     category_tags: tuple[str, ...] = ()
     nova_group: int | None = None
     additives: tuple[AdditiveInfo, ...] | None = None  # None = additive list unknown
+    ingredients_text: str | None = None  # EST-6: for estimating missing inputs
 
     def get(self, name: str) -> Nutrient | None:
         return self.nutrients.get(name)

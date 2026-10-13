@@ -40,8 +40,12 @@ async def test_a_barcode_only_usda_has_is_stored_scored_and_credited(
     assert usda_mock.routes["search"].calls.last.request.url.params["query"] == "00051000198808"
     async with sessionmaker() as s:
         product = await s.get(Product, GTIN)
-        assert product is not None and set(product.source_by_field.values()) == {"usda"}
-        assert product.additives_known is False
+        assert product is not None
+        # Everything is from USDA except the additive list, derived from its ingredients (EST-5).
+        sources = product.source_by_field
+        assert sources["additives"] == "derived"
+        assert {v for k, v in sources.items() if k != "additives"} == {"usda"}
+        assert product.additives_known is True
 
 
 @spec("USDA-9")
@@ -65,3 +69,18 @@ async def test_off_products_still_credit_only_off(
     body = (await client.get("/products/0036000291452")).json()
     assert body["attribution"] == "Data from Open Food Facts (ODbL)"
     assert not usda_mock.routes["search"].called
+
+
+@spec("EST-5")
+@pytest.mark.usefixtures("off_misses")
+async def test_usda_products_get_additives_from_their_ingredient_list(
+    client: httpx.AsyncClient, usda_mock: respx.MockRouter, sessionmaker: Maker
+) -> None:
+    ham = {**HIT, "ingredients": "PORK, WATER, SALT, SODIUM NITRITE."}
+    usda_mock.routes["search"].respond(200, json={"foods": [ham]})
+    body = (await client.get(f"/products/{GTIN}")).json()
+    assert [a["code"] for a in body["additives"]] == ["e250"]
+    assert body["score"]["components"]["additives"]["known"] is True
+    async with sessionmaker() as s:
+        product = await s.get(Product, GTIN)
+        assert product is not None and product.source_by_field["additives"] == "derived"

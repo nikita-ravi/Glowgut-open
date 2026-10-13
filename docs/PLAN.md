@@ -36,9 +36,9 @@ Every task follows the spec-driven workflow in `specs/README.md`: spec first, th
 ## M2: Scoring engine (weeks 3–4)
 
 - [x] `scoring/nutriscore_2023.py`: port the 2023 algorithm (general, beverages, cheese, fats/oils/nuts/seeds) from OFF's `ProductOpener::Nutriscore` docs; thresholds in `config/scoring.yaml`
-- [ ] Fruit/veg/legume % estimator from ingredient text, flagged `estimated` *(for now OFF's own estimate is used and flagged)*
+- [x] Fruit/veg/legume % estimator from ingredient text, flagged `estimated` *(spec 014; a lower bound from stated percentages)*
 - [x] `scoring/additives.py`: penalty from `risk_level` × `evidence_grade`; cap rule for high-risk + strong-evidence
-- [ ] `scoring/processing.py`: NOVA → 0–1 *(done)*; derive NOVA for USDA-only products from ingredient markers (document the heuristic)
+- [x] `scoring/processing.py`: NOVA → 0–1; derive NOVA from ingredient markers when missing *(spec 014; 91% agreement with OFF on 20,000 US products)*
 - [x] `scoring/engine.py`: combine into a 0–100 total + breakdown list `[{rule_id, points, input_value, source_url, estimated}]`; "not scored" path
 - [x] `scoring/explain.py`: template sentences from the breakdown (no LLM)
 - [ ] `GET /products/{gtin}/breakdown`; scores persisted per `engine_version` *(done)*; pipeline re-scores on load

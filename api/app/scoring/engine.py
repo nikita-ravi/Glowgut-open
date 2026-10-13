@@ -3,13 +3,13 @@
 Pure and deterministic: no I/O, no clock, no randomness (ENGINE-4).
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Any, cast
 
-from app.scoring import additives, nutriscore_2023, processing
+from app.scoring import additives, ingredients, nutriscore_2023, processing
 from app.scoring.config import ScoringConfig, default_config
-from app.scoring.types import BreakdownLine, Component, ProductFacts
+from app.scoring.types import BreakdownLine, Component, Nutrient, ProductFacts
 
 CONFIDENCE_INPUTS = ("energy_kj", "sugars_g", "saturated_fat_g", "salt_g",
                      "fiber_g", "proteins_g", "fvl_percent")  # fmt: skip
@@ -66,12 +66,29 @@ def _confidence(facts: ProductFacts) -> float:
     return float(round_half_up(present / (len(CONFIDENCE_INPUTS) + 2), 2))
 
 
+def _with_estimates(
+    facts: ProductFacts, cfg: ScoringConfig
+) -> tuple[ProductFacts, ingredients.NovaEstimate | None]:
+    """Fill inputs the label data lacks from the ingredient list (specs/014)."""
+    parsed = ingredients.split_ingredients(facts.ingredients_text)  # EST-1
+    if facts.get("fvl_percent") is None:
+        fvl = ingredients.estimate_fvl(parsed, cfg.estimates)  # EST-2
+        if fvl is not None:
+            nutrients = {**facts.nutrients, "fvl_percent": Nutrient(fvl, estimated=True)}
+            facts = replace(facts, nutrients=nutrients)
+    nova = (
+        None if facts.nova_group is not None else ingredients.estimate_nova(parsed, cfg.estimates)
+    )
+    return facts, nova
+
+
 def score(facts: ProductFacts, cfg: ScoringConfig | None = None) -> ScoreResult:
     cfg = cfg or default_config()
+    facts, nova_estimate = _with_estimates(facts, cfg)
     codes = [a.code for a in facts.additives or ()]
     ns = nutriscore_2023.compute(facts, cfg.nutriscore, codes)
     add = additives.compute(facts.additives, cfg.additives)
-    proc = processing.compute(facts.nova_group, cfg.processing)
+    proc = processing.compute(facts.nova_group, cfg.processing, nova_estimate)
 
     n_value: float | None = None
     if ns.nutri_class == "water":

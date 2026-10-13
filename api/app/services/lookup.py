@@ -11,10 +11,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models import Additive, Product, ProductAdditive, Score
 from app.scoring.config import ScoringConfig
 from app.scoring.engine import ScoreResult, score
+from app.scoring.ingredients import find_additive_codes
 from app.scoring.types import AdditiveInfo, Nutrient, ProductFacts
 from app.services.gtin import lookup_forms
 from app.services.off_client import OFFClient, SourceUnavailable
-from app.services.off_mapping import additive_codes, map_product
+from app.services.off_mapping import additive_codes, completeness, map_product
 from app.services.usda_client import USDAClient
 from app.services.usda_mapping import map_product as map_usda_product
 
@@ -75,7 +76,22 @@ async def _facts(session: AsyncSession, product: Product) -> ProductFacts:
         additives = tuple(
             AdditiveInfo(a.code, a.name, a.risk_level, a.evidence_grade, a.efsa_url) for a in rows
         )
-    return build_facts(product.nutrition, product.categories, product.nova_group, additives)
+    return build_facts(
+        product.nutrition, product.categories, product.nova_group, additives,
+        product.ingredients_text,
+    )  # fmt: skip
+
+
+async def _derive_additives(session: AsyncSession, row: dict[str, Any]) -> list[str] | None:
+    """Additives named in a USDA ingredient list, or None without one (EST-5)."""
+    if not row["ingredients_text"]:
+        return None
+    names = {c: n for c, n in await session.execute(select(Additive.code, Additive.name))}
+    codes = find_additive_codes(row["ingredients_text"], names)
+    row["additives_known"] = True
+    row["source_by_field"]["additives"] = "derived"
+    row["completeness"] = completeness(row["nutrition"], row["nova_group"], True)
+    return codes
 
 
 async def product_additives(session: AsyncSession, gtin: str) -> list[dict[str, Any]]:
@@ -97,6 +113,7 @@ def build_facts(
     categories: list[str],
     nova_group: int | None,
     additives: tuple[AdditiveInfo, ...] | None,
+    ingredients_text: str | None = None,
 ) -> ProductFacts:
     """Engine input from a `products` row's fields (shared with the bulk loader)."""
     return ProductFacts(
@@ -107,6 +124,7 @@ def build_facts(
         category_tags=tuple(categories),
         nova_group=nova_group,
         additives=additives,
+        ingredients_text=ingredients_text,
     )
 
 
@@ -172,7 +190,8 @@ async def lookup(
         food = await usda.fetch(gtin) if usda is not None else None  # USDA-7
         if food is None:
             raise ProductNotFound(gtin)  # LOOKUP-7, USDA-9
-        row, codes = map_usda_product(gtin, food, now), None  # USDA-8
+        row = map_usda_product(gtin, food, now)  # USDA-8
+        codes = await _derive_additives(session, row)  # EST-5
 
     await _upsert(session, row, codes, cfg.engine_version)  # LOOKUP-6
     await session.commit()

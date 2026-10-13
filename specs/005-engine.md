@@ -62,3 +62,4 @@ category tags, NOVA group, the additive list (or `None` if unknown), and
 | engine_version | Change |
 | --- | --- |
 | 0.1.0 | First version: Nutri-Score 2023, OFF-taxonomy additives, NOVA. |
+| 0.2.0 | Missing fruit/vegetable share and NOVA group are estimated from the ingredient list (spec 014), flagged `estimated`. |

@@ -82,6 +82,20 @@ class ProcessingConfig(_Frozen):
     nova_values: dict[int, float]
 
 
+class NovaEstimateConfig(_Frozen):
+    ultra_markers: list[str]
+    culinary: list[str]
+    ignore: list[str]
+
+
+class EstimatesConfig(_Frozen):
+    source_url: str
+    fvl_source_url: str
+    fvl_words: list[str]
+    fvl_exclude: list[str]
+    nova: NovaEstimateConfig
+
+
 class AlternativesConfig(_Frozen):
     min_gain: int
     limit: int
@@ -103,6 +117,7 @@ class ScoringConfig(_Frozen):
     nutriscore: NutriScoreConfig
     additives: AdditivesConfig
     processing: ProcessingConfig
+    estimates: EstimatesConfig
     alternatives: AlternativesConfig
     recalls: RecallsConfig
 

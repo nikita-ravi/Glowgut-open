@@ -1,6 +1,6 @@
 # Scoring configuration. Any change above the "Not scoring" line must bump engine_version
 # and add a changelog line in specs/005-engine.md.
-engine_version: "0.1.0"
+engine_version: "0.2.0"
 
 weights:
   nutrition: 60
@@ -147,6 +147,45 @@ processing:
     2: 0.67
     3: 0.33
     4: 0.0
+
+# Estimates from the ingredient list (specs/014). Matched as whole words, lowercase.
+estimates:
+  source_url: https://world.openfoodfacts.org/nova
+  fvl_source_url: https://mpc.gouvernement.lu/dam-assets/le-minist%C3%A8re/consodur/2022-main-algorithm-report-update-final.pdf
+  # EST-2: fruits, vegetables and legumes. Potatoes, other starchy tubers and nuts don't count
+  # (Nutri-Score 2023).
+  fvl_words: [fruit, fruits, vegetable, vegetables, apple, apples, apricot, apricots, banana,
+    bananas, berries, blackberries, blueberries, cranberries, raspberries, strawberries,
+    cherries, cherry, grape, grapes, raisins, dates, figs, lemon, lemons, lime, limes, mango,
+    mangoes, orange, oranges, peach, peaches, pear, pears, pineapple, plum, plums, prunes,
+    pomegranate, coconut, tomato, tomatoes, carrot, carrots, onion, onions, garlic, celery,
+    spinach, kale, broccoli, cauliflower, cabbage, lettuce, cucumber, cucumbers, zucchini,
+    squash, pumpkin, beet, beets, beetroot, eggplant, artichoke, asparagus, avocado,
+    olives, mushrooms, peppers, jalapeno, jalapenos, peas, beans, chickpeas, lentils,
+    edamame, soybeans, corn]
+  # Ingredients with one of these words are processed derivatives, never fruit/veg.
+  fvl_exclude: [flavor, flavour, flavors, flavoring, extract, oil, starch, protein, fiber,
+    syrup, sugar, lecithin, gum, powder, color, colour, concentrate, potato, potatoes]
+  nova:
+    # EST-3: any of these makes the product NOVA 4 (ultra-processed).
+    ultra_markers: [high fructose corn syrup, corn syrup, glucose syrup, glucose fructose,
+      fructose, dextrose, maltodextrin, invert sugar, hydrogenated, interesterified,
+      modified starch, modified food starch, modified corn starch, protein isolate,
+      isolated soy protein, hydrolyzed, mechanically separated, natural flavor,
+      natural flavors, artificial flavor, artificial flavors, flavoring, flavorings,
+      flavouring, artificial color, artificial colors, color added, caramel color, red 40,
+      yellow 5, yellow 6, blue 1, emulsifier, emulsifiers, mono and diglycerides, lecithin,
+      polysorbate 80, carrageenan, xanthan gum, cellulose gum, sucralose, aspartame,
+      acesulfame potassium, saccharin, monosodium glutamate, disodium inosinate,
+      disodium guanylate, maltitol, sorbitol, guar gum, locust bean gum, gellan gum,
+      gum arabic, acacia gum, annatto, beta carotene, paprika extract, glycerin, whey,
+      whey protein, wheat gluten, vital wheat gluten, lactose, casein, caseinate,
+      sodium caseinate, powdered cellulose, milk protein concentrate, soy protein]
+    # EST-3: processed culinary ingredients (NOVA 2).
+    culinary: [sugar, cane sugar, brown sugar, salt, sea salt, oil, olive oil, vegetable oil,
+      canola oil, sunflower oil, butter, vinegar, honey, maple syrup, molasses, lard,
+      corn starch]
+    ignore: [water, filtered water]
 
 # ---- Not scoring: these sections never change a score, so editing them doesn't bump
 # engine_version.
