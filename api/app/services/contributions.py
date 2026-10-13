@@ -59,6 +59,7 @@ def product_row(gtin: str, c: ContributionIn, now: datetime) -> dict[str, Any]:
         "primary_category": categories[-1] if categories else None, "categories": categories,
         "image_url": None, "ingredients_text": (c.ingredients_text or "").strip() or None,
         "nutrition": nutrition, "nova_group": None, "labels": [], "is_organic": False,
+        "allergens": [], "traces": [], "ingredients_analysis": [],
         "additives_known": False, "fetched_at": now,
     }  # fmt: skip
     present = [

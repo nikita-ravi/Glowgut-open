@@ -91,6 +91,9 @@ def map_product(gtin: str, p: dict[str, Any], fetched_at: datetime) -> dict[str,
         "nova_group": nova,
         "labels": labels,
         "is_organic": "en:organic" in labels,
+        "allergens": _tags(p, "allergens_tags"),  # ACC-6
+        "traces": _tags(p, "traces_tags"),
+        "ingredients_analysis": _tags(p, "ingredients_analysis_tags"),
         "additives_known": codes is not None,
         "fetched_at": fetched_at,
     }

@@ -35,7 +35,8 @@ COUNTRY = "en:united-states"
 # Columns kept, checked against the export's header on 2026-10-12. Tag columns are
 # comma-separated; nutrient columns are per 100 g.
 TEXT_COLUMNS = ["code", "product_name", "brands", "ingredients_text", "image_url"]
-TAG_COLUMNS = ["categories_tags", "labels_tags", "additives_tags"]
+TAG_COLUMNS = ["categories_tags", "labels_tags", "additives_tags", "allergens", "traces_tags",
+               "ingredients_analysis_tags"]  # fmt: skip
 INT_COLUMNS = ["nova_group", "last_modified_t", "unique_scans_n", "nutriscore_score"]
 NUTRIENT_COLUMNS = [
     "energy-kj_100g", "energy-kcal_100g", "energy_100g", "fat_100g", "saturated-fat_100g",
@@ -121,6 +122,9 @@ def to_api_product(row: dict[str, Any]) -> dict[str, Any]:
         "nutriments": {c: row[c] for c in NUTRIENT_COLUMNS if row[c] is not None},
         "nova_group": row["nova_group"],
         "labels_tags": row["labels_tags"],
+        "allergens_tags": row.get("allergens") or [],  # ACC-6
+        "traces_tags": row.get("traces_tags") or [],
+        "ingredients_analysis_tags": row.get("ingredients_analysis_tags") or [],
         # The CSV can't tell "no additives" from "not analysed". Without an ingredient list
         # and without additives, the list is unknown (ADD-6).
         "additives_tags": additives if additives or row["ingredients_text"] else None,
@@ -164,6 +168,17 @@ def mapped_rows(
     return [item for _, (_, item) in ranked[:max_products]]
 
 
+def extract_outdated(extract: Path = EXTRACT, export: Path = EXPORT) -> bool:
+    """Rebuild the extract if it's missing, older than the export, or lacks a column we now
+    keep (e.g. allergens, added for spec 018)."""
+    if not extract.exists():
+        return True
+    if export.exists() and extract.stat().st_mtime < export.stat().st_mtime:
+        return True
+    names = [*TEXT_COLUMNS, *TAG_COLUMNS, *INT_COLUMNS, *NUTRIENT_COLUMNS, *STRING_COLUMNS]
+    return not set(names) <= set(pl.read_parquet_schema(extract))
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--refresh", action="store_true", help="download a new export")
@@ -171,10 +186,10 @@ def main() -> None:
     args = parser.parse_args()
     settings = get_settings()
     started = time.monotonic()
-    if args.refresh or not EXPORT.exists():
+    if args.refresh or (not EXPORT.exists() and extract_outdated()):
         download(settings.user_agent)
         print(f"off: export downloaded in {time.monotonic() - started:.0f}s")
-    if args.refresh or not EXTRACT.exists() or EXTRACT.stat().st_mtime < EXPORT.stat().st_mtime:
+    if args.refresh or extract_outdated():
         extract()
         print(f"off: US extract written to {EXTRACT} ({time.monotonic() - started:.0f}s)")
     usda = usda_fill()

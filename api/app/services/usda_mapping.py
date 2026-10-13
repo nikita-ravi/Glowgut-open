@@ -106,6 +106,9 @@ def map_product(gtin: str, food: UsdaFood, fetched_at: datetime) -> dict[str, An
         "nova_group": None,
         "labels": [],
         "is_organic": False,
+        "allergens": [],
+        "traces": [],
+        "ingredients_analysis": [],  # unknown for USDA (ACC-6)
         "additives_known": False,  # USDA has no parsed additive list (spec 014 derives it)
         "fetched_at": fetched_at,
     }

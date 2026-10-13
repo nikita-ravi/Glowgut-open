@@ -37,6 +37,9 @@ class Product(Base):
     nova_group: Mapped[int | None] = mapped_column(SmallInteger)
     labels: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list)
     is_organic: Mapped[bool] = mapped_column(Boolean, default=False)
+    allergens: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list)  # ACC-6
+    traces: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list)
+    ingredients_analysis: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list)
     additives_known: Mapped[bool] = mapped_column(Boolean, default=False)
     source_by_field: Mapped[dict[str, str]] = mapped_column(JSONB, default=dict)
     completeness: Mapped[Decimal | None] = mapped_column(Numeric(3, 2))

@@ -94,6 +94,11 @@ def product_body(result: LookupResult) -> dict[str, Any]:
         "nova_group": p.nova_group,
         "labels": p.labels,
         "is_organic": p.is_organic,
+        "allergens": p.allergens,  # ACC-6
+        "traces": p.traces,
+        "ingredients_analysis": p.ingredients_analysis,
+        # Known only when OFF analysed an ingredient list; USDA and contributions have none.
+        "allergens_known": p.source_by_field.get("ingredients_text") == "off",
         "completeness": float(p.completeness) if p.completeness is not None else None,
         "source_by_field": p.source_by_field,
         "fetched_at": p.fetched_at.isoformat(),

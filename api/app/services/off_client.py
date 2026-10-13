@@ -11,7 +11,7 @@ import httpx
 FIELDS = ",".join([
     "code", "product_name", "product_name_en", "brands", "categories_tags", "image_front_url",
     "ingredients_text", "ingredients_text_en", "nutriments", "nova_group", "labels_tags",
-    "additives_tags",
+    "additives_tags", "allergens_tags", "traces_tags", "ingredients_analysis_tags",
 ])  # fmt: skip
 RETRY_STATUSES = {429, 503}
 MAX_RETRIES = 2

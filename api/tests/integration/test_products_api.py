@@ -249,3 +249,16 @@ async def test_product_lists_its_additives_with_us_status(
          "fda_cfr_ref": "172.170"},
         {"code": "e330", "name": "E330 - Citric acid", "us_status": None, "fda_cfr_ref": None},
     ]  # fmt: skip
+
+
+@spec("ACC-6")
+async def test_product_carries_allergens_and_says_whether_they_are_known(
+    client: httpx.AsyncClient, off_mock: respx.MockRouter
+) -> None:
+    route13(off_mock).respond(200, json=off_product(
+        allergens_tags=["en:gluten"], traces_tags=["en:nuts"],
+        ingredients_analysis_tags=["en:vegan"],
+    ))  # fmt: skip
+    body = (await client.get(f"/products/{GTIN}")).json()
+    assert body["allergens"] == ["en:gluten"] and body["traces"] == ["en:nuts"]
+    assert body["ingredients_analysis"] == ["en:vegan"] and body["allergens_known"] is True
