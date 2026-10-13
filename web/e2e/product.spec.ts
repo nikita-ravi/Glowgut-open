@@ -97,3 +97,16 @@ test("[ALT-10] [RECALL-12] the recall banner shows, and an alternative opens its
   await expect(page).toHaveURL("/p/0000000000017");
   await expect(page.getByRole("heading", { name: "Plain Oat Bars", level: 1 })).toBeVisible();
 });
+
+test("[SEARCH-7] [SEARCH-8] search by name, pick a suggestion, open the product", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const box = page.getByRole("combobox", { name: "Search by name or brand" });
+  await box.fill("oat bars");
+  await expect(page.getByRole("option", { name: /Plain Oat Bars/ })).toBeVisible();
+  await box.press("ArrowDown");
+  await box.press("Enter");
+  await expect(page).toHaveURL(/\/p\/\d{13}$/);
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Oat Bars");
+});

@@ -63,7 +63,7 @@ Every task follows the spec-driven workflow in `specs/README.md`: spec first, th
 
 ## M4: Search + contributions (week 7)
 
-- [ ] `GET /search?q=`: trigram + tsvector ranking, debounced client autocomplete
+- [x] `GET /search?q=`: trigram + tsvector ranking, debounced client autocomplete *(spec 016; p95 still to measure on the loaded DB)*
 - [ ] Label-photo flow: capture → compress → Robotoff extraction (fallback Tesseract.js) → user confirms every field → `POST /contributions` → score
 - [ ] Opt-in push of confirmed data + photos back to OFF via the Python SDK
 
