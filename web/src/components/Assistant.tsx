@@ -164,10 +164,16 @@ export function Assistant({
     setQuestion("");
     setBusy(true);
     try {
-      const parsed = await understand(q);
+      // ASSIST-21: start the keyword search while the LLM is still thinking; reuse it when both
+      // agree on the product, and fall back to the keyword guess when the LLM names none.
+      const keywords = parseQuestion(q).productQuery;
+      const early = keywords ? search(keywords) : null;
+      const understood = await understand(q);
+      const parsed = understood.productQuery || lastGtin.current ? understood : { ...understood, productQuery: keywords };
       let gtin: string | null = null;
       if (parsed.productQuery) {
-        const outcome = await search(parsed.productQuery); // ASSIST-4
+        const same = early && parsed.productQuery.toLowerCase() === keywords;
+        const outcome = await (same ? early : search(parsed.productQuery)); // ASSIST-4
         if (outcome.kind === "error") return reply(NOT_AVAILABLE);
         const which = parsed.generic && !outcome.gtin ? clarify(parsed.productQuery, outcome.results) : null;
         if (which) return reply(which); // ASSIST-16

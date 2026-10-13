@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { AssistantProduct } from "@/lib/assistant";
+import type { AssistantProduct, Parsed } from "@/lib/assistant";
 import type { SearchOutcome } from "@/lib/search";
 
 import { Assistant } from "./Assistant";
@@ -131,7 +131,7 @@ describe("[ASSIST-15] [ASSIST-16] understanding with the LLM route", () => {
     render(<Assistant search={found} fetchProduct={product} understand={understand} />);
     await ask("I have dental issues, is Pringles ok");
     expect(understand).toHaveBeenCalledWith("I have dental issues, is Pringles ok");
-    expect(found).toHaveBeenCalledWith("Pringles");
+    expect(found).toHaveBeenCalledTimes(1); // the early keyword search is reused (ASSIST-21)
     expect(conversation()).toHaveTextContent("For dental issues: Sugars: 1.5 g per 100 g, which is low");
   });
 
@@ -250,5 +250,34 @@ describe("[ASSIST-19] [ASSIST-20] Whisper speech to text", () => {
     fireEvent.click(await mic());
     expect(voice.start).not.toHaveBeenCalled();
     expect(FakeRecognition.instances.at(-1)!.start).toHaveBeenCalled();
+  });
+});
+
+describe("[ASSIST-21] speed and robustness", () => {
+  it("searches while the model thinks, and reuses that search when they agree", async () => {
+    let release!: () => void;
+    const slow = vi.fn(() => new Promise<Parsed>((r) => { release = () => r({ conditions: ["diabetes"], topics: [], productQuery: "Pringles" }); }));
+    render(<Assistant search={found} fetchProduct={product} understand={slow} />);
+    fireEvent.change(screen.getByLabelText("Your question"), { target: { value: "diabetic, Pringles?" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    await waitFor(() => expect(found).toHaveBeenCalledWith("pringles")); // before the model answers
+    await act(async () => release());
+    await waitFor(() => expect(conversation()).toHaveTextContent("For blood sugar:"));
+    expect(found).toHaveBeenCalledTimes(1);
+  });
+
+  it("uses the keyword product when the model names none", async () => {
+    const none = vi.fn(async (): Promise<Parsed> => ({ conditions: ["teeth"], topics: [], productQuery: null }));
+    render(<Assistant search={found} fetchProduct={product} understand={none} />);
+    await ask("I have a dental problem, which Pringles brand should I eat?");
+    expect(found).toHaveBeenCalledWith("pringles");
+    expect(conversation()).toHaveTextContent("For teeth: Sugars: 1.5 g per 100 g");
+  });
+
+  it("searches the model's product when it differs from the keywords", async () => {
+    const other = vi.fn(async (): Promise<Parsed> => ({ conditions: [], topics: [], productQuery: "Pringles Original" }));
+    render(<Assistant search={found} fetchProduct={product} understand={other} />);
+    await ask("tell me about those pringles chips");
+    expect(found).toHaveBeenCalledWith("Pringles Original");
   });
 });

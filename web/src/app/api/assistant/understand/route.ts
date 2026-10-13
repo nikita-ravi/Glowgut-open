@@ -9,7 +9,7 @@ const PER_MINUTE = 20;
 
 const PROMPT = `You read a shopper's question about a grocery product and return JSON only:
 {"product": string|null, "generic_product": boolean, "conditions": string[], "other_concerns": [{"label": string, "nutrients": string[]}], "topics": string[]}
-- product: only the brand and product words, e.g. "Pringles original". null if none ("what about its salt?").
+- product: only the brand and product words, e.g. "Pringles original". If they ask which brand or for a recommendation, product is the food named ("which chocolate should I eat?" -> "chocolate", generic_product true). null only if no food is named ("what about its salt?").
 - generic_product: true if product is a broad type with no brand ("chocolate", "chips", "cereal").
 - conditions: any of ${CONDITIONS.join(", ")} that the person mentions (diabetic -> diabetes, cavities -> teeth, celiac -> gluten, lactose -> dairy, peanut allergy -> nuts, cholesterol -> heart, hypertension -> blood_pressure).
 - other_concerns: health conditions or life stages not in that list, e.g. {"label": "pregnancy", "nutrients": []} or {"label": "kidney disease", "nutrients": ["salt"]}. label is 1-4 plain words. nutrients: any of ${CONCERN_NUTRIENTS.join(", ")} that matter on a food label for it, else [].
