@@ -58,11 +58,13 @@ docs/            SPEC.md, PLAN.md
 
 ```
 cp .env.example .env                          # then set OFF_CONTACT
+uv run pre-commit install --install-hooks      # once: lint, format, secrets and commit-message checks before each commit
 docker compose up -d db                       # local Postgres 16 (also creates ofs_test for tests)
 uv run alembic upgrade head                   # migrations
 uv run python -m pipeline.reference           # load the additives table from the OFF taxonomy
 uv run python -m pipeline.recalls             # sync openFDA recalls (last 3 years, ~6 MB download)
 uv run pytest                                 # unit + integration + spec traceability
+uv run pytest --cov                           # same, with coverage (fails under 85%)
 uv run ruff check . && uv run ruff format --check . && uv run mypy api pipeline   # lint and types
 uv run fastapi dev api/app/main.py            # API on :8000
 cd web && corepack pnpm@10.18.3 install       # web deps (also copies the ZXing .wasm into public/)
@@ -81,6 +83,8 @@ Update this section as soon as a command changes.
 - **Track sources per field.** `products.source_by_field` records whether each field came from `off` or `usda`. The merge keeps the more complete value per field.
 - **Be a good Open Food Facts citizen.** Cache first, send a descriptive User-Agent (`OpenFoodScanner/0.1 (contact email)`), back off on 429s, and use the bulk dump for anything predictable.
 - **Tests come with the code.** Every scoring rule gets a unit test. Any change to the lookup flow gets an integration test against the Docker DB.
+- **Commit and PR titles follow Conventional Commits** (`feat(scope): …`, `fix: …`). A commit-msg hook and the PR-title check enforce it; release-please builds CHANGELOG.md from them. PRs are squash-merged, so the PR title becomes the commit on `main`.
+- Dependabot opens weekly grouped update PRs; CodeQL scans every PR. Treat their PRs like any other: CI must pass.
 - Keep functions small and typed. No new top-level dependency without a one-line reason in the PR description.
 
 ## Gotchas

@@ -42,3 +42,4 @@ next-env.d.ts
 
 # generated at install (scripts/copy-zxing-wasm.mjs)
 /public/zxing/
+/coverage
