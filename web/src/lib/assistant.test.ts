@@ -109,6 +109,15 @@ describe("[ASSIST-7] score, disclaimer, and careful wording", () => {
     expect(a.endsWith(DISCLAIMER)).toBe(true);
   });
 
+  it("ends every product answer with the disclaimer, follow-ups and overviews too", () => {
+    for (const q of ["what about its salt?", "Pringles", "how many additives in Pringles"])
+      expect(answerFor(PRINGLES, parseQuestion(q)).endsWith(DISCLAIMER)).toBe(true);
+  });
+
+  it("capitalises an all-lowercase product name", () => {
+    expect(answerFor({ ...PRINGLES, name: "pringles", brand: "Pringles" }, parseQuestion("Pringles"))).toMatch(/^Pringles\./);
+  });
+
   it("never says safe, can or can't eat, or other banned words", () => {
     const qs = ["diabetic Pringles", "blood pressure Pringles", "celiac Pringles", "vegan Pringles",
       "how many additives in Pringles", "Pringles", "weight Pringles"];

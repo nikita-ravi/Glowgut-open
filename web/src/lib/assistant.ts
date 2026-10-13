@@ -137,7 +137,8 @@ function round(value: number): string {
 }
 
 function productName(p: AssistantProduct): string {
-  const name = p.name ?? "this product";
+  const raw = p.name ?? "this product";
+  const name = raw === raw.toLowerCase() ? raw.charAt(0).toUpperCase() + raw.slice(1) : raw;
   return p.brand && !name.toLowerCase().includes(p.brand.toLowerCase()) ? `${p.brand} ${name}` : name;
 }
 
@@ -256,7 +257,7 @@ export function answerFor(p: AssistantProduct, parsed: Parsed): string {
   for (const c of parsed.conditions) parts.push(`${CONDITION_INTRO[c]}: ${conditionSentences(p, c).join(" ")}`);
   for (const t of parsed.topics.filter((t) => t !== "score")) parts.push(...topicSentences(p, t));
   parts.push(scoreSentence(p));
-  if (parsed.conditions.length) parts.push(DISCLAIMER);
+  parts.push(DISCLAIMER);
   return parts.join(" ");
 }
 
