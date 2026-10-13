@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     database_url: str = "postgresql+asyncpg://ofs:ofs@localhost:5432/ofs"
+    response_cache_ttl_s: float = 300  # CACHE-2; 0 turns the cache off
+    response_cache_max: int = 2000  # CACHE-4
     off_base_url: str = "https://world.openfoodfacts.org"
     off_contact: str = "set-OFF_CONTACT-in-.env"
     off_timeout_s: float = 4.0
