@@ -1,11 +1,16 @@
 # Scoring configuration. Any change above the "Not scoring" line must bump engine_version
 # and add a changelog line in specs/005-engine.md.
-engine_version: "0.3.0"
+engine_version: "0.4.0"
 
 weights:
   nutrition: 60
   additives: 30
   processing: 10
+
+# ENGINE-1: nutrition value at each grade's lower boundary (A 1.0-0.8, B 0.8-0.6, ... E 0.2-0).
+nutrition_anchors: {a: 0.8, b: 0.6, c: 0.4, d: 0.2}
+# ENGINE-14: poor nutrition caps the total, as in Yuka.
+nutriscore_cap: {grades: [d, e], total: 49}
 
 bands: # inclusive lower bounds, checked from the top
   - {id: excellent, label: Excellent, min: 75}
@@ -241,3 +246,5 @@ changelog:
     change: "Missing fruit/vegetable share and NOVA group are estimated from the ingredient list (spec 014), flagged `estimated`."
   - version: "0.3.0"
     change: "Found by the golden gate (spec 015): only spring and mineral waters are in the water class; olive, rapeseed and walnut oils count as 100% fruit/vegetables (NS-22)."
+  - version: "0.4.0"
+    change: "Balanced scoring, as in Yuka: nutrition by Nutri-Score grade (ENGINE-1) and a D/E cap at 49 (ENGINE-14). A typical E product drops about 18 points; A products don't change. Plain-language explanation (ENGINE-15)."

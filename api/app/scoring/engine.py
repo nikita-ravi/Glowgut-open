@@ -66,6 +66,25 @@ def _confidence(facts: ProductFacts) -> float:
     return float(round_half_up(present / (len(CONFIDENCE_INPUTS) + 2), 2))
 
 
+def nutrition_value(ns_score: int, nutri_class: str, lo: int, hi: int, cfg: ScoringConfig) -> float:
+    """N from the Nutri-Score, by grade (ENGINE-1).
+
+    Grade boundaries map to `nutrition_anchors` (A 1.0-0.8 ... E 0.2-0); in between, N falls
+    linearly, so it's continuous across boundaries. The class's best score gives 1.0, the
+    worst 0.0.
+    """
+    bounds = nutriscore_2023.grade_bounds(nutri_class, cfg.nutriscore)  # type: ignore[arg-type]
+    grades = [g for g in ("a", "b", "c", "d") if g in bounds]
+    xs = [float(lo), *(bounds[g] + 0.5 for g in grades), float(hi)]
+    ys = [1.0, *(cfg.nutrition_anchors[g] for g in grades), 0.0]
+    s = min(max(float(ns_score), xs[0]), xs[-1])
+    for i in range(len(xs) - 1):
+        if xs[i] <= s <= xs[i + 1]:
+            t = 0.0 if xs[i + 1] == xs[i] else (s - xs[i]) / (xs[i + 1] - xs[i])
+            return round(ys[i] + t * (ys[i + 1] - ys[i]), 4)
+    return 0.0
+
+
 def _with_estimates(
     facts: ProductFacts, cfg: ScoringConfig
 ) -> tuple[ProductFacts, ingredients.NovaEstimate | None]:
@@ -95,7 +114,7 @@ def score(facts: ProductFacts, cfg: ScoringConfig | None = None) -> ScoreResult:
         n_value = 1.0  # ENGINE-1
     elif ns.computable and ns.score is not None and ns.min_score is not None:
         assert ns.max_score is not None
-        n_value = round((ns.max_score - ns.score) / (ns.max_score - ns.min_score), 4)
+        n_value = nutrition_value(ns.score, ns.nutri_class, ns.min_score, ns.max_score, cfg)
 
     values = {"nutrition": n_value, "additives": add.value, "processing": proc.value}
     missing = list(ns.missing)
@@ -146,5 +165,14 @@ def score(facts: ProductFacts, cfg: ScoringConfig | None = None) -> ScoreResult:
             note="An additive with a high EFSA overexposure risk caps the score.",
         ))  # fmt: skip
         total = capped
+
+    cap = cfg.nutriscore_cap  # ENGINE-14: poor nutrition caps the total
+    if ns.grade in cap.grades and total > cap.total:
+        breakdown.append(BreakdownLine(
+            "nutrition.cap", "nutrition", cap.total - total, cap.total,
+            cfg.nutriscore.source_urls["foods"],
+            note=f"A Nutri-Score of {ns.grade.upper()} caps the score at {cap.total}.",
+        ))  # fmt: skip
+        total = cap.total
 
     return result("scored", total)

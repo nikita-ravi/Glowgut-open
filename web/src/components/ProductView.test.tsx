@@ -241,3 +241,24 @@ describe("[FDA-6] US status of additives", () => {
     expect(screen.getByText("E250 - Sodium nitrite").closest("li")).toHaveTextContent(words);
   });
 });
+
+describe("[PAGE-17] full additive marks are explained", () => {
+  it("says none of the additives has an EFSA risk rating", () => {
+    const f = structuredClone(scored) as unknown as Fixture;
+    f.product.score.components.additives = { weight: 30, value: 1, known: true };
+    f.product.additives = [
+      { code: "e322", name: "E322 - Lecithins", us_status: "gras", fda_cfr_ref: "184.1400" },
+      { code: "e414", name: "E414 - Acacia gum", us_status: null, fda_cfr_ref: null },
+    ];
+    render(<ProductView product={f.product} breakdown={f.breakdown} />);
+    const bars = screen.getByRole("region", { name: "What makes up the score" });
+    expect(bars).toHaveTextContent("None of its 2 additives has an EFSA risk rating.");
+  });
+
+  it("says nothing when there are no additives or some were rated", () => {
+    const f = structuredClone(scored) as unknown as Fixture;
+    f.product.additives = [];
+    render(<ProductView product={f.product} breakdown={f.breakdown} />);
+    expect(screen.queryByText(/EFSA risk rating\./)).toBeNull();
+  });
+});

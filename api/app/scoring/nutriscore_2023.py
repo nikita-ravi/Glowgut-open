@@ -62,13 +62,19 @@ def classify(
     return "general", is_red_meat
 
 
-def grade_for(score: int, nutri_class: NutriClass, cfg: NutriScoreConfig) -> str:
-    bounds = {
+def grade_bounds(nutri_class: NutriClass, cfg: NutriScoreConfig) -> dict[str, int]:
+    """Upper score bound of each grade for the class (NS-17..NS-19)."""
+    return {
         "general": cfg.general.grades,
         "cheese": cfg.general.grades,
         "fats_oils_nuts_seeds": cfg.fats_oils_nuts_seeds.grades,
         "beverage": cfg.beverage.grades,
+        "water": {},
     }[nutri_class]
+
+
+def grade_for(score: int, nutri_class: NutriClass, cfg: NutriScoreConfig) -> str:
+    bounds = grade_bounds(nutri_class, cfg)
     for grade in ("a", "b", "c", "d"):
         if grade in bounds and score <= bounds[grade]:
             return grade
@@ -106,6 +112,16 @@ def _tables(nutri_class: NutriClass, cfg: NutriScoreConfig) -> _Tables:
         ("energy_kj", g.energy_kj), "grams", g.saturated_fat_g,
         g.sugars_g, g.salt_g, g.proteins_g, g.fiber_g, g.fvl_percent,
     )  # fmt: skip
+
+
+def max_points(nutri_class: NutriClass, cfg: NutriScoreConfig) -> dict[str, int]:
+    """Most points each component can score in the class, keyed like the rule ids."""
+    t = _tables(nutri_class, cfg)
+    sat = "saturates_ratio" if t.saturates_kind == "ratio" else "saturated_fat"
+    energy = "energy_from_saturates" if t.energy[0] == "energy_from_saturates_kj" else "energy"
+    return {energy: len(t.energy[1]), sat: len(t.saturates), "sugars": len(t.sugars),
+            "salt": len(t.salt), "proteins": len(t.proteins), "fiber": len(t.fiber),
+            "fvl": max(pts for _, pts in t.fvl)}  # fmt: skip
 
 
 def score_range(nutri_class: NutriClass, cfg: NutriScoreConfig) -> tuple[int, int]:
