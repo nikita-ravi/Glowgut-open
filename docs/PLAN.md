@@ -82,5 +82,5 @@ Every task follows the spec-driven workflow in `specs/README.md`: spec first, th
 
 - [ ] Voice: Web Speech STT → intent router (product, score, alternatives, allergen check) → `kokoro-js` TTS; "read this product aloud"
 - [x] Methodology page, `engine_version` changelog, About/attribution page, privacy page *(specs 018, 019)*
-- [ ] Deploy: web → Vercel/Cloudflare Pages; API → Render free or Cloudflare Tunnel; DB → Supabase; weekly pipeline cron in GitHub Actions
+- [x] Deploy configs: web → Vercel; API → Render free (Dockerfile); DB → Supabase; weekly pipeline cron in GitHub Actions *(specs 020, 021; `docs/DEPLOY.md`. Going live needs the accounts)*
 - [x] License check in CI (`pip-licenses`, `pnpm licenses`): fail on GPL/AGPL

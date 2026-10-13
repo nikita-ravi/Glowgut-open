@@ -51,7 +51,7 @@ api/tests/       unit/, integration/ (Docker Postgres, OFF mocked with respx), p
 web/             Next.js PWA
 config/scoring.yaml   weights and thresholds; bump engine_version on any change
 data/            raw dumps (gitignored, never committed)
-docs/            SPEC.md, PLAN.md
+docs/            SPEC.md, PLAN.md, DEPLOY.md (step-by-step free-tier deploy)
 ```
 
 ## Commands

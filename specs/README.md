@@ -59,3 +59,4 @@ and noting why; its tests go with it.
 | [018-accounts](018-accounts.md) | Google sign-in, preferences, history, favorites, allergen warnings | implemented |
 | [019-launch-pages](019-launch-pages.md) | Methodology and About pages, site footer | implemented |
 | [020-scheduled-jobs](020-scheduled-jobs.md) | Daily recall sync and weekly data refresh (GitHub Actions) | implemented |
+| [021-deploy](021-deploy.md) | Deployment: Docker API, Render, Vercel, Supabase | implemented |

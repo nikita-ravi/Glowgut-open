@@ -113,3 +113,37 @@ jobs:
         working-directory: web
       - run: pnpm e2e
         working-directory: web
+
+  docker:
+    # DEPLOY-2: the API image builds, migrates a fresh database and answers /health.
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ofs
+          POSTGRES_PASSWORD: ofs
+          POSTGRES_DB: ofs
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ofs -d ofs"
+          --health-interval 2s --health-timeout 3s --health-retries 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the API image
+        run: docker build -t ofs-api .
+      - name: Start it against Postgres
+        run: |
+          docker run -d --name api --network host -e PORT=8080 \
+            -e DATABASE_URL=postgresql+asyncpg://ofs:ofs@127.0.0.1:5432/ofs ofs-api
+          for i in $(seq 1 60); do
+            curl -sf http://127.0.0.1:8080/health && break
+            sleep 2
+          done
+          curl -sf http://127.0.0.1:8080/health
+          curl -sf http://127.0.0.1:8080/methodology | grep -q engine_version
+      - name: Container logs
+        if: always()
+        run: docker logs api || true
+      - name: Runs as a non-root user
+        run: test "$(docker inspect -f '{{.Config.User}}' ofs-api)" = "app"
