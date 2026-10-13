@@ -49,3 +49,4 @@ and noting why; its tests go with it.
 | [008-product-page](008-product-page.md) | Product page and PWA shell | implemented |
 | [009-alternatives](009-alternatives.md) | Better-scored alternatives (API + strip) | implemented |
 | [010-recalls](010-recalls.md) | openFDA recall banner | implemented |
+| [011-bulk-import](011-bulk-import.md) | Bulk import of US products from the OFF export | implemented |

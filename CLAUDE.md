@@ -27,7 +27,7 @@ Feature behaviour is defined in `specs/NNN-*.md` as numbered requirements (`**GT
 
 | Layer | Choice |
 | --- | --- |
-| Offline pipeline | Python 3.12 + DuckDB (reads Parquet/CSV in place) |
+| Offline pipeline | Python 3.12 + Polars (streams the OFF CSV export and the USDA zip; never loads them whole) |
 | API | FastAPI + SQLAlchemy 2 + Alembic, async (`asyncpg`) |
 | DB | PostgreSQL 16 (`pg_trgm`, full-text search, JSONB, RLS). Local: Docker. Hosted: Supabase free tier (500 MB cap: keep the DB ≤ 450 MB) |
 | Web | Next.js (App Router) + TypeScript + Tailwind, installable PWA |
@@ -42,7 +42,7 @@ Feature behaviour is defined in `specs/NNN-*.md` as numbered requirements (`**GT
 ## Repo layout
 
 ```
-pipeline/        offline data: reference.py (additives), recalls.py (openFDA); bulk OFF/USDA import (tool not chosen yet)
+pipeline/        offline data: reference.py (additives), recalls.py (openFDA), off_bulk.py + load.py (bulk OFF import)
 specs/           feature specs with requirement IDs (the source of truth for behaviour)
 api/app/         FastAPI app: main.py, routers/, services/ (gtin, off_client, off_mapping, lookup, alternatives, recalls), db/
 api/app/scoring/ engine.py, nutriscore_2023.py, additives.py, processing.py, explain.py, config.py
@@ -63,6 +63,7 @@ docker compose up -d db                       # local Postgres 16 (also creates 
 uv run alembic upgrade head                   # migrations
 uv run python -m pipeline.reference           # load the additives table from the OFF taxonomy
 uv run python -m pipeline.recalls             # sync openFDA recalls (last 3 years, ~6 MB download)
+uv run python -m pipeline.off_bulk            # bulk-load US products from the OFF export (~1.3 GB download, cached in data/off/)
 uv run pytest                                 # unit + integration + spec traceability
 uv run pytest --cov                           # same, with coverage (fails under 85%)
 uv run ruff check . && uv run ruff format --check . && uv run mypy api pipeline   # lint and types
@@ -94,7 +95,8 @@ Update this section as soon as a command changes.
 - Next 16 keeps the previous route mounted but hidden after navigation. In Playwright, scope text queries (e.g. to `footer`) or they match the hidden page too.
 - `barcode-detector` fetches its WASM from jsDelivr by default. `src/lib/detector.ts` overrides that to `/zxing/`; keep it that way (spec 007, SCAN-11).
 - OFF taxonomy properties are keyed by language (`{"en": "en:high"}`). Unwrap them; don't expect plain strings.
-- The OFF Parquet file is ~4.2 GB. Query it with DuckDB in place. Never load it whole into Python memory or into Postgres.
+- The OFF CSV export is ~1.3 GB gzipped (~4M products). `pipeline/off_bulk.py` streams it and keeps US rows only. Don't read Hugging Face's ~8 GB Parquet remotely: anonymous range requests get rate-limited (429).
+- The hosted DB budget is 450 MB, about 100,000 products with scores. Bulk scores are stored without breakdown lines; the lookup fills them in on first view.
 - In OFF, US products may be stored with 12- or 13-digit codes. Look up both forms.
 - USDA Branded Foods has no NOVA group, no Nutri-Score, and no parsed additives. Derive them from its ingredient text and nutrient rows.
 - The Supabase free tier pauses after 7 idle days. The weekly GitHub Actions job keeps it active.

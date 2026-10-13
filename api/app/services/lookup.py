@@ -73,39 +73,59 @@ async def _facts(session: AsyncSession, product: Product) -> ProductFacts:
         additives = tuple(
             AdditiveInfo(a.code, a.name, a.risk_level, a.evidence_grade, a.efsa_url) for a in rows
         )
+    return build_facts(product.nutrition, product.categories, product.nova_group, additives)
+
+
+def build_facts(
+    nutrition: dict[str, Any],
+    categories: list[str],
+    nova_group: int | None,
+    additives: tuple[AdditiveInfo, ...] | None,
+) -> ProductFacts:
+    """Engine input from a `products` row's fields (shared with the bulk loader)."""
     return ProductFacts(
         nutrients={
             k: Nutrient(float(v["value"]), bool(v.get("estimated", False)))
-            for k, v in product.nutrition.items()
+            for k, v in nutrition.items()
         },
-        category_tags=tuple(product.categories),
-        nova_group=product.nova_group,
+        category_tags=tuple(categories),
+        nova_group=nova_group,
         additives=additives,
     )
+
+
+def score_row(gtin: str, result: ScoreResult, *, with_breakdown: bool) -> dict[str, Any]:
+    """A `scores` row. Bulk loads store the result without breakdown lines to save space;
+    the lines are filled in the first time the product is viewed (OFF-8)."""
+    out = result.to_dict(with_breakdown=with_breakdown)
+    pts = {k: c["value"] for k, c in out["components"].items()}
+    return {
+        "gtin": gtin,
+        "engine_version": result.engine_version,
+        "total": result.total,
+        "nutrition_pts": pts["nutrition"],
+        "additive_pts": pts["additives"],
+        "processing_pts": pts["processing"],
+        "breakdown": out,
+    }
 
 
 async def _score(session: AsyncSession, product: Product, cfg: ScoringConfig) -> dict[str, Any]:
     """Return the stored score for this engine version, computing it once if absent (LOOKUP-9)."""
     existing = await session.get(Score, (product.gtin, cfg.engine_version))
-    if existing is not None:
+    if existing is not None and "breakdown" in existing.breakdown:
         return existing.breakdown
-    result: ScoreResult = score(await _facts(session, product), cfg)
-    out = result.to_dict()
-    pts = {k: c["value"] for k, c in out["components"].items()}
+    # No row, or a compact bulk row: compute the full result. It is deterministic for this
+    # engine_version (ENGINE-4), so completing a compact row never changes its score.
+    row = score_row(product.gtin, score(await _facts(session, product), cfg), with_breakdown=True)
+    stmt = insert(Score).values(**row)
     await session.execute(
-        insert(Score)
-        .values(
-            gtin=product.gtin,
-            engine_version=cfg.engine_version,
-            total=result.total,
-            nutrition_pts=pts["nutrition"],
-            additive_pts=pts["additives"],
-            processing_pts=pts["processing"],
-            breakdown=out,
+        stmt.on_conflict_do_update(
+            index_elements=["gtin", "engine_version"], set_={"breakdown": stmt.excluded.breakdown}
         )
-        .on_conflict_do_nothing(index_elements=["gtin", "engine_version"])
     )
     await session.commit()
+    out: dict[str, Any] = row["breakdown"]
     return out
 
 

@@ -20,12 +20,12 @@ Every task follows the spec-driven workflow in `specs/README.md`: spec first, th
 
 ## M1: Data foundation (weeks 1–2)
 
-- [ ] `pipeline/off.py`: download `food.parquet` to `data/off/` (skip if present); `DESCRIBE` it and record the real column names in a comment; filter to US + scorable rows; select the needed fields
+- [x] `pipeline/off_bulk.py`: download the OFF CSV export to `data/off/` (skip if present); record the real column names in a comment; filter to US + scorable rows; select the needed fields *(spec 011; Polars, not DuckDB)*
 - [ ] `pipeline/usda.py`: read Branded Foods CSVs from `data/usda/` (inspect headers first); pivot the needed nutrients per 100 g; normalize `gtin_upc`
 - [x] `api/app/services/gtin.py`: normalize + validate GTIN (UPC-A, EAN-8, EAN-13), with unit tests covering bad check digits, leading zeros, and 12↔13 forms
 - [ ] `pipeline/merge.py`: per-field merge on GTIN, with `source_by_field` and a `completeness` score
 - [ ] `pipeline/reference.py`: build the `additives` table from the OFF additives taxonomy + OpenFoodTox + FDA Substances Added to Food *(OFF taxonomy part done; OpenFoodTox and FDA status still to do)*
-- [ ] `pipeline/load.py`: staging tables → `COPY` → swap in a transaction; size report; fail above 450 MB
+- [x] `pipeline/load.py`: staging table → `COPY` → merge in a transaction (keeps newer live rows); size report; fail above 450 MB
 - [x] `GET /products/{gtin}`: cache → OFF live → USDA live → 404 `{"next":"contribute"}`; upsert on fetch; descriptive User-Agent; backoff on 429 *(spec 006; USDA live fallback still to do)*
 - [x] Integration tests for each branch of the lookup flow (mock HTTP with `respx`)
 
