@@ -7,7 +7,9 @@ import {
   type AssistantProduct,
   NEED_PRODUCT,
   NOT_AVAILABLE,
+  type Parsed,
   answerFor,
+  clarify,
   notFound,
   parseQuestion,
 } from "@/lib/assistant";
@@ -52,13 +54,28 @@ async function fetchProductJson(gtin: string): Promise<AssistantProduct | null> 
   }
 }
 
+// ASSIST-15: the LLM route first, the keyword rules on any failure.
+async function understandQuestion(question: string): Promise<Parsed> {
+  try {
+    const res = await fetch("/api/assistant/understand", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question }),
+    });
+    if (res.ok) return (await res.json()) as Parsed;
+  } catch {}
+  return parseQuestion(question);
+}
+
 // The voice assistant tab (spec 023).
 export function Assistant({
   search = searchProducts,
   fetchProduct = fetchProductJson,
+  understand = understandQuestion,
 }: {
   search?: (q: string) => Promise<SearchOutcome>;
   fetchProduct?: (gtin: string) => Promise<AssistantProduct | null>;
+  understand?: (q: string) => Promise<Parsed>;
 }) {
   const inputId = useId();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -108,11 +125,13 @@ export function Assistant({
     setQuestion("");
     setBusy(true);
     try {
-      const parsed = parseQuestion(q);
+      const parsed = await understand(q);
       let gtin: string | null = null;
       if (parsed.productQuery) {
         const outcome = await search(parsed.productQuery); // ASSIST-4
         if (outcome.kind === "error") return reply(NOT_AVAILABLE);
+        const which = parsed.generic && !outcome.gtin ? clarify(parsed.productQuery, outcome.results) : null;
+        if (which) return reply(which); // ASSIST-16
         gtin = outcome.gtin ?? outcome.results[0]?.gtin ?? null;
         if (!gtin) return reply(notFound(parsed.productQuery)); // ASSIST-8
       } else {
@@ -243,6 +262,10 @@ export function Assistant({
           Ask
         </button>
       </form>
+      <p className="-mt-3 text-xs text-zinc-600">
+        Questions are sent to Groq, an AI service, only to understand them. Answers come from the product&apos;s label
+        data.
+      </p>
 
       <ol aria-label="Conversation" aria-live="polite" className="flex flex-col gap-3">
         {messages.map((m) => (
