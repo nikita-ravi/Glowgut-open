@@ -8,10 +8,13 @@ export default function PrivacyPage() {
     <article className="flex flex-col gap-4 text-sm leading-6">
       <h1 className="text-2xl font-bold">Privacy</h1>
       <p>You can use the scanner, search and product pages without an account. Then we store nothing about you.</p>
-      <h2 className="text-lg font-semibold">If you sign in with Google</h2>
+      <h2 className="text-lg font-semibold">If you sign in</h2>
       <ul className="list-disc space-y-1 pl-5">
-        <li>Your Google account&apos;s name, email and picture, to show who is signed in.</li>
-        <li>A sign-in session, kept in a secure cookie. We never store a password or your Google tokens.</li>
+        <li>Your name and email (and, with Google, your picture), to show who is signed in.</li>
+        <li>
+          A sign-in session, kept in a secure cookie. With email sign-in we keep only a salted hash of your password,
+          never the password itself. With Google we never keep your Google tokens.
+        </li>
         <li>Your allergens, diets, and whether history is paused, to tailor product pages.</li>
         <li>Scan history: which products you opened, when, and their score then. Newest 1,000 only.</li>
         <li>Saved products, and the products you added from a label photo.</li>

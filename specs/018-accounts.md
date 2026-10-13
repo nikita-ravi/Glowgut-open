@@ -10,8 +10,9 @@ if the API has a bug.
 
 ## Sign-in
 
-- **ACC-1** Sign-in uses Better Auth in the web app with Google as the only provider. The
-  session lives in an httpOnly, Secure, SameSite=Lax cookie. No password is ever stored.
+- **ACC-1** Sign-in uses Better Auth in the web app, with Google or an email and password
+  (ACC-19). The session lives in an httpOnly, Secure, SameSite=Lax cookie. A password is never
+  stored in plain text: Better Auth keeps only a salted scrypt hash.
 - **ACC-2** We keep only what Better Auth needs: an internal user id, the Google account's
   email, name and avatar URL, and the session. No Google tokens are stored after sign-in.
 - **ACC-3** The web app gets a short-lived (15-minute) signed JWT for the user from Better
@@ -85,10 +86,20 @@ if the API has a bug.
   Google, during sign-in.
 - **ACC-16** The privacy page (M6) lists exactly what is stored, why, and how to delete it.
 
+## Email and password (added 2026-10-13)
+
+- **ACC-19** `/sign-in` has two modes: "Sign in" (email, password) and "Create account" (name,
+  email, password of at least 8 characters). Wrong details say "That email and password don't
+  match." without saying which one was wrong. Success returns to the page in `?next=` (only a
+  path on this site, else `/account`). "Continue with Google" is offered as well.
+- **ACC-20** The header's "Sign in" links to `/sign-in?next={current path}`, and the account
+  page's signed-out view shows the same form.
+
 ## Decisions (approved 2026-10-12)
 
 1. History is on by default, with a "Pause history" switch (ACC-5).
 2. History keeps the newest 1,000 scans until the user deletes them (ACC-17).
-3. Google is the only sign-in provider for now (ACC-1).
+3. ~~Google is the only sign-in provider for now (ACC-1).~~ Email and password added for the
+   demo on 2026-10-13 (ACC-19, ACC-20).
 4. Contributions made while signed in are linked to the user, and unlinked on account
    deletion (ACC-13, ACC-18).

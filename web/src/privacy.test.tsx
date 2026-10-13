@@ -26,8 +26,9 @@ describe("[ACC-15] no analytics or tracking", () => {
 describe("[ACC-16] privacy page", () => {
   it("lists what is stored and how to delete it", () => {
     render(<PrivacyPage />);
-    expect(screen.getByRole("heading", { name: "If you sign in with Google" })).toBeInTheDocument();
-    expect(screen.getByText(/never store a password or your Google tokens/)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "If you sign in" })).toBeInTheDocument();
+    expect(screen.getByText(/only a salted hash of your password/)).toBeInTheDocument();
+    expect(screen.getByText(/never keep your Google tokens/)).toBeInTheDocument();
     expect(screen.getByText(/Newest 1,000 only/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "your account page" })).toHaveAttribute("href", "/account");
   });

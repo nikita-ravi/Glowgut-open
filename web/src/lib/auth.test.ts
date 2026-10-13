@@ -2,10 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import { authOptions, withoutProviderTokens } from "./auth";
 
-describe("[ACC-1] Google is the only way to sign in", () => {
-  it("configures Google and no passwords", () => {
+describe("[ACC-1] [ACC-19] sign-in methods", () => {
+  it("configures Google, and email and password with at least 8 characters", () => {
     expect(Object.keys(authOptions.socialProviders)).toEqual(["google"]);
-    expect(authOptions.emailAndPassword.enabled).toBe(false);
+    expect(authOptions.emailAndPassword).toMatchObject({ enabled: true, minPasswordLength: 8, autoSignIn: true });
   });
 });
 
