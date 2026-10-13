@@ -1,6 +1,6 @@
 [project]
 name = "open-food-scanner"
-version = "0.1.0"
+version = "0.2.0"
 description = "Scan a US grocery barcode, get an explainable 0-100 health score."
 readme = "CLAUDE.md"
 license = "MIT"
