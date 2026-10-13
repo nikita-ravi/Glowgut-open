@@ -1,8 +1,10 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId, useState, useSyncExternalStore } from "react";
 
 import { signInWithEmail, signInWithGoogle, signUpWithEmail } from "@/lib/auth-client";
+
+const noSubscribe = () => () => {};
 
 /** ACC-19: sign in or create an account with an email and password, or use Google. */
 export function SignInForm({ next = "/account", onDone }: { next?: string; onDone?: (next: string) => void }) {
@@ -13,6 +15,8 @@ export function SignInForm({ next = "/account", onDone }: { next?: string; onDon
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Until React has loaded, a click would submit the form as a plain page reload and lose it.
+  const ready = useSyncExternalStore(noSubscribe, () => true, () => false);
   const done = onDone ?? ((to: string) => window.location.assign(to)); // full load: header and session refresh
 
   async function submit(e: React.FormEvent) {
@@ -89,7 +93,7 @@ export function SignInForm({ next = "/account", onDone }: { next?: string; onDon
             {error}
           </p>
         )}
-        <button type="submit" disabled={busy} className="btn-primary disabled:opacity-50">
+        <button type="submit" disabled={busy || !ready} className="btn-primary disabled:opacity-50">
           {busy ? "One moment…" : mode === "in" ? "Sign in" : "Create account"}
         </button>
       </form>
