@@ -24,6 +24,13 @@ export interface Score {
   breakdown?: BreakdownLine[];
 }
 
+export interface ProductAdditive {
+  code: string;
+  name: string;
+  us_status: string | null;
+  fda_cfr_ref: string | null;
+}
+
 export interface Product {
   gtin: string;
   name: string | null;
@@ -35,6 +42,7 @@ export interface Product {
   stale: boolean;
   score: Score;
   attribution: string;
+  additives?: ProductAdditive[];
 }
 
 export interface Breakdown {

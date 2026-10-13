@@ -1,7 +1,7 @@
 // Pure presentation helpers: turn API data into words and numbers for the product page.
 // No scoring happens here; everything reads from the API's breakdown (spec 008).
 
-import type { BreakdownLine, Component, Score } from "./api";
+import type { BreakdownLine, Component, ProductAdditive, Score } from "./api";
 
 export const COMPONENT_LABELS: Record<Component, string> = {
   nutrition: "Nutrition",
@@ -119,6 +119,34 @@ function formatNumber(value: unknown, unit = ""): string {
   return String(value ?? "");
 }
 
+// FDA-6: US regulatory status in words, from FDA's Substances Added to Food inventory.
+const US_STATUS: Record<string, string> = {
+  food_additive: "US: approved food additive",
+  color_additive: "US: approved color additive",
+  gras: "US: generally recognized as safe, GRAS",
+  prior_sanctioned: "US: prior-sanctioned",
+  gras_flavor: "US: flavoring, GRAS per FEMA",
+  delisted: "US: color listing ended (delisted)",
+  prohibited: "US: prohibited in food",
+};
+
+export interface UsStatusView {
+  text: string;
+  cfr: string | null;
+  cfrUrl: string | null;
+}
+
+export function usStatusView(additive: ProductAdditive | undefined): UsStatusView | undefined {
+  const text = additive?.us_status ? US_STATUS[additive.us_status] : undefined;
+  if (!text) return undefined;
+  const cfr = additive?.fda_cfr_ref ?? null;
+  return {
+    text,
+    cfr: cfr && `21 CFR ${cfr}`,
+    cfrUrl: cfr && `https://www.ecfr.gov/current/title-21/section-${cfr}`,
+  };
+}
+
 export interface LineView {
   key: string;
   label: string;
@@ -128,10 +156,15 @@ export interface LineView {
   sourceUrl: string;
   estimated: boolean;
   note?: string;
+  usStatus?: UsStatusView;
 }
 
 /** One readable row per breakdown line (PAGE-5, PAGE-6). Summary lines are excluded. */
-export function lineView(line: BreakdownLine, weights: Record<Component, number>): LineView {
+export function lineView(
+  line: BreakdownLine,
+  weights: Record<Component, number>,
+  additives: Map<string, ProductAdditive> = new Map(),
+): LineView {
   const base = {
     key: line.rule_id,
     sourceUrl: line.source_url,
@@ -174,6 +207,7 @@ export function lineView(line: BreakdownLine, weights: Record<Component, number>
       ...base,
       note: undefined, // the rating words below already say what the note says
       label: info.name ?? line.rule_id.replace("additives.", "").toUpperCase(),
+      usStatus: usStatusView(additives.get(line.rule_id.replace("additives.", ""))),
       value: risk === null || risk === undefined ? "Not rated by EFSA" : RISK_WORDS[risk],
       points: penalty === 0 ? "0" : String(penalty),
       pointsHint: "Score points",
@@ -205,7 +239,11 @@ export function emptyComponentText(score: Score, component: Component): string {
     : "No data.";
 }
 
-export function groupBreakdown(score: Score & { breakdown: BreakdownLine[] }) {
+export function groupBreakdown(
+  score: Score & { breakdown: BreakdownLine[] },
+  additives: ProductAdditive[] = [],
+) {
+  const byCode = new Map(additives.map((a) => [a.code, a]));
   const weights = {
     nutrition: score.components.nutrition.weight,
     additives: score.components.additives.weight,
@@ -217,7 +255,7 @@ export function groupBreakdown(score: Score & { breakdown: BreakdownLine[] }) {
     emptyText: emptyComponentText(score, component),
     lines: score.breakdown
       .filter((l) => l.component === component && !l.rule_id.startsWith("component."))
-      .map((l) => lineView(l, weights)),
+      .map((l) => lineView(l, weights, byCode)),
   }));
 }
 

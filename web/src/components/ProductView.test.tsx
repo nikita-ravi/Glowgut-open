@@ -206,3 +206,38 @@ describe("[PAGE-16] empty components say why", () => {
     expect(within(section).getByText("No data.")).toBeInTheDocument();
   });
 });
+
+describe("[FDA-6] US status of additives", () => {
+  it("states the FDA status in words with a link to the CFR section", () => {
+    const f = structuredClone(scored) as unknown as Fixture;
+    f.product.additives = [
+      { code: "e250", name: "E250 - Sodium nitrite", us_status: "food_additive", fda_cfr_ref: "172.170" },
+      { code: "e330", name: "E330 - Citric acid", us_status: null, fda_cfr_ref: null },
+    ];
+    render(<ProductView product={f.product} breakdown={f.breakdown} />);
+    const nitrite = screen.getByText("E250 - Sodium nitrite").closest("li")!;
+    expect(nitrite).toHaveTextContent("US: approved food additive (21 CFR 172.170)");
+    expect(within(nitrite).getByRole("link", { name: "21 CFR 172.170" })).toHaveAttribute(
+      "href",
+      "https://www.ecfr.gov/current/title-21/section-172.170",
+    );
+    const citric = screen.getByText("E330 - Citric acid").closest("li")!;
+    expect(citric).not.toHaveTextContent("US:");
+  });
+
+  it.each([
+    ["color_additive", "74.303", "US: approved color additive (21 CFR 74.303)"],
+    ["gras", "184.1033", "US: generally recognized as safe, GRAS (21 CFR 184.1033)"],
+    ["prior_sanctioned", "181.33", "US: prior-sanctioned (21 CFR 181.33)"],
+    ["prohibited", "189.120", "US: prohibited in food (21 CFR 189.120)"],
+    ["gras_flavor", null, "US: flavoring, GRAS per FEMA"],
+    ["delisted", null, "US: color listing ended (delisted)"],
+  ])("words %s", (status, cfr, words) => {
+    const f = structuredClone(scored) as unknown as Fixture;
+    f.product.additives = [
+      { code: "e250", name: "E250 - Sodium nitrite", us_status: status, fda_cfr_ref: cfr },
+    ];
+    render(<ProductView product={f.product} breakdown={f.breakdown} />);
+    expect(screen.getByText("E250 - Sodium nitrite").closest("li")).toHaveTextContent(words);
+  });
+});

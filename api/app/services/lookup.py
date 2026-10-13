@@ -78,6 +78,20 @@ async def _facts(session: AsyncSession, product: Product) -> ProductFacts:
     return build_facts(product.nutrition, product.categories, product.nova_group, additives)
 
 
+async def product_additives(session: AsyncSession, gtin: str) -> list[dict[str, Any]]:
+    """The product's additives with their US status (FDA-5)."""
+    rows = await session.scalars(
+        select(Additive)
+        .join(ProductAdditive, ProductAdditive.additive_code == Additive.code)
+        .where(ProductAdditive.gtin == gtin)
+        .order_by(Additive.code)
+    )
+    return [
+        {"code": a.code, "name": a.name, "us_status": a.us_status, "fda_cfr_ref": a.fda_cfr_ref}
+        for a in rows
+    ]
+
+
 def build_facts(
     nutrition: dict[str, Any],
     categories: list[str],

@@ -61,7 +61,7 @@ cp .env.example .env                          # then set OFF_CONTACT
 uv run pre-commit install --install-hooks      # once: lint, format, secrets and commit-message checks before each commit
 docker compose up -d db                       # local Postgres 16 (also creates ofs_test for tests)
 uv run alembic upgrade head                   # migrations
-uv run python -m pipeline.reference           # load the additives table from the OFF taxonomy
+uv run python -m pipeline.reference           # load the additives table: OFF taxonomy + FDA US status (--refresh re-downloads)
 uv run python -m pipeline.recalls             # sync openFDA recalls (last 3 years, ~6 MB download)
 uv run python -m pipeline.off_bulk            # bulk-load US products from the OFF export (~1.3 GB download, cached in data/off/)
                                               # with data/usda/branded.zip present (FDC Branded Foods CSV), USDA fills nutrient gaps
@@ -95,6 +95,8 @@ Update this section as soon as a command changes.
 - This is Next.js 16: read `web/node_modules/next/dist/docs/` before writing Next code. With Cache Components on, route `params` are request-time data and must be read inside `<Suspense>`.
 - Next 16 keeps the previous route mounted but hidden after navigation. In Playwright, scope text queries (e.g. to `footer`) or they match the hidden page too.
 - `barcode-detector` fetches its WASM from jsDelivr by default. `src/lib/detector.ts` overrides that to `/zxing/`; keep it that way (spec 007, SCAN-11).
+- EFSA OpenFoodTox is CC BY-ND 4.0 (no derivatives): don't import it. ADIs come from the OFF taxonomy (ODbL).
+- FDA's "Substances Added to Food" export is a CSV despite its `downloadxls` URL, with a preamble before the header. Cells look like `=T("172.170")`.
 - OFF taxonomy properties are keyed by language (`{"en": "en:high"}`). Unwrap them; don't expect plain strings.
 - The OFF CSV export is ~1.3 GB gzipped (~4M products). `pipeline/off_bulk.py` streams it and keeps US rows only. Don't read Hugging Face's ~8 GB Parquet remotely: anonymous range requests get rate-limited (429).
 - The hosted DB budget is 450 MB, about 100,000 products with scores. Bulk scores are stored without breakdown lines; the lookup fills them in on first view.

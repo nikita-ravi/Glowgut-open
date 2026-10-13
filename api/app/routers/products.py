@@ -15,7 +15,7 @@ from app.scoring.explain import explain
 from app.scoring.types import BreakdownLine
 from app.services.alternatives import find_alternatives
 from app.services.gtin import InvalidGTIN, normalize
-from app.services.lookup import LookupResult, ProductNotFound, lookup
+from app.services.lookup import LookupResult, ProductNotFound, lookup, product_additives
 from app.services.off_client import OFFClient, SourceUnavailable
 from app.services.recalls import find_recalls, recalls_as_of
 from app.services.usda_client import USDAClient
@@ -145,7 +145,9 @@ async def get_product(
     result = await _resolve(gtin, session, off, cfg, settings, now, usda)
     if (not_modified := _cached(request, response, _etag(result, cfg))) is not None:
         return not_modified
-    return _product_body(result)  # LOOKUP-10
+    body = _product_body(result)  # LOOKUP-10
+    body["additives"] = await product_additives(session, result.product.gtin)  # FDA-5
+    return body
 
 
 @router.get("/{gtin}/breakdown", response_model=None)

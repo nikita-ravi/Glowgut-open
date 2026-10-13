@@ -24,7 +24,7 @@ Every task follows the spec-driven workflow in `specs/README.md`: spec first, th
 - [x] `pipeline/usda_bulk.py`: read Branded Foods CSVs straight from the zip in `data/usda/` (headers inspected); pivot the needed nutrients per 100 g; normalize `gtin_upc` *(spec 012)*
 - [x] `api/app/services/gtin.py`: normalize + validate GTIN (UPC-A, EAN-8, EAN-13), with unit tests covering bad check digits, leading zeros, and 12↔13 forms
 - [x] Per-field merge on GTIN, with `source_by_field` and a `completeness` score *(USDA fills OFF gaps, never replaces; in `usda_mapping.fill_gaps`)*
-- [ ] `pipeline/reference.py`: build the `additives` table from the OFF additives taxonomy + OpenFoodTox + FDA Substances Added to Food *(OFF taxonomy part done; OpenFoodTox and FDA status still to do)*
+- [x] `pipeline/reference.py`: build the `additives` table from the OFF additives taxonomy + FDA Substances Added to Food *(spec 013; OpenFoodTox is CC BY-ND, so not imported: ADIs come from the OFF taxonomy)*
 - [x] `pipeline/load.py`: staging table → `COPY` → merge in a transaction (keeps newer live rows); size report; fail above 450 MB
 - [x] `GET /products/{gtin}`: cache → OFF live → USDA live → 404 `{"next":"contribute"}`; upsert on fetch; descriptive User-Agent; backoff on 429 *(spec 006; USDA live fallback in spec 012)*
 - [x] Integration tests for each branch of the lookup flow (mock HTTP with `respx`)
@@ -52,7 +52,7 @@ Every task follows the spec-driven workflow in `specs/README.md`: spec first, th
 
 - [x] PWA manifest + service worker (offline shell only); installable on iOS/Android
 - [x] Scanner page: `barcode-detector` polyfill, camera permission UX, torch toggle where supported, manual entry fallback
-- [x] Product page: score + band (text label + color), component bars, breakdown list with source links, ingredients, additives (grade + US status), completeness badge, attribution + "not medical advice" footer *(US regulatory status shows once FDA data is loaded)*
+- [x] Product page: score + band (text label + color), component bars, breakdown list with source links, ingredients, additives (grade + US status), completeness badge, attribution + "not medical advice" footer *(US regulatory status from FDA, spec 013)*
 - [x] `GET /products/{gtin}/alternatives` + an alternatives strip *(fills up once the bulk pipeline loads products)*
 - [x] Recall banner from openFDA (synced from the bulk file, matched on barcode or brand + product name) *(daily GitHub Actions sync waits for the hosted DB)*
 - [x] Playwright e2e: scan-by-entry → product page → breakdown → alternative *(axe check, offline shell and recall banner also covered)*
