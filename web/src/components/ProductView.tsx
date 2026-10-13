@@ -24,27 +24,74 @@ const BADGE_STYLES = {
 
 export function ProductFooter() {
   return (
-    <footer className="mx-auto mt-10 w-full max-w-xl border-t border-zinc-200 px-4 py-4 text-sm text-zinc-600">
-      <nav aria-label="Site" className="mb-2 flex gap-4">
-        <Link href="/methodology" className="underline">
-          How the score works
-        </Link>
-        <Link href="/about" className="underline">
-          About
-        </Link>
-        <Link href="/privacy" className="underline">
-          Privacy
-        </Link>
-      </nav>
-      <p>
-        Data from{" "}
-        <a className="underline" href="https://world.openfoodfacts.org">
-          Open Food Facts (ODbL)
-        </a>
-        .
-      </p>
-      <p>Educational information, not medical advice.</p>
+    <footer className="mt-16 border-t border-zinc-200 bg-zinc-50/60 pb-24 md:pb-0">
+      <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-10 text-sm text-zinc-600 sm:px-6 md:grid-cols-[2fr_1fr_1fr]">
+        <div className="flex flex-col gap-2">
+          <p className="flex items-center gap-2 font-semibold text-zinc-900">
+            <span aria-hidden="true" className="grid h-6 w-6 place-items-center rounded-lg bg-emerald-700 text-xs text-white">
+              OF
+            </span>
+            Open Food Scanner
+          </p>
+          <p className="max-w-sm">
+            A 0–100 health score for US groceries where every point traces back to a rule and a cited source.
+          </p>
+          <p>Educational information, not medical advice.</p>
+        </div>
+        <nav aria-label="Site" className="flex flex-col gap-2">
+          <p className="font-semibold text-zinc-900">Learn</p>
+          <Link href="/methodology" className="hover:text-zinc-900">
+            How the score works
+          </Link>
+          <Link href="/about" className="hover:text-zinc-900">
+            About
+          </Link>
+          <Link href="/privacy" className="hover:text-zinc-900">
+            Privacy
+          </Link>
+        </nav>
+        <div className="flex flex-col gap-2">
+          <p className="font-semibold text-zinc-900">Data</p>
+          <p>
+            Data from{" "}
+            <a className="underline hover:text-zinc-900" href="https://world.openfoodfacts.org">
+              Open Food Facts (ODbL)
+            </a>
+            .
+          </p>
+          <p>Recalls from openFDA. Additive status from the FDA.</p>
+        </div>
+      </div>
     </footer>
+  );
+}
+
+const RING_COLORS: Record<string, string> = {
+  excellent: "stroke-emerald-600",
+  good: "stroke-lime-600",
+  mediocre: "stroke-amber-500",
+  poor: "stroke-rose-600",
+};
+
+/** A 0–100 ring gauge; decorative, the number beside it carries the meaning. */
+export function ScoreRing({ total, bandId, size = 112 }: { total: number; bandId?: string; size?: number }) {
+  const r = 42;
+  const c = 2 * Math.PI * r;
+  return (
+    <svg aria-hidden="true" width={size} height={size} viewBox="0 0 100 100" className="shrink-0 -rotate-90">
+      <circle cx="50" cy="50" r={r} fill="none" strokeWidth="9" className="stroke-zinc-100" />
+      <circle
+        cx="50"
+        cy="50"
+        r={r}
+        fill="none"
+        strokeWidth="9"
+        strokeLinecap="round"
+        strokeDasharray={c}
+        strokeDashoffset={c * (1 - Math.max(0, Math.min(100, total)) / 100)}
+        className={(bandId && RING_COLORS[bandId]) || "stroke-zinc-400"}
+      />
+    </svg>
   );
 }
 
@@ -53,19 +100,26 @@ function ScoreHeader({ product }: { product: Product }) {
   if (score.status === "not_scored") {
     const missing = missingWords(score.missing_inputs).join(", ");
     return (
-      <div className="rounded-xl bg-zinc-100 p-4 ring-2 ring-zinc-400">
-        <p className="text-2xl font-bold">Not scored</p>
-        <p className="mt-1 text-sm">The label data is missing {missing}.</p>
+      <div className="rounded-2xl bg-zinc-50 p-5 ring-1 ring-zinc-200">
+        <p className="text-2xl font-semibold">Not scored</p>
+        <p className="mt-1 text-sm text-zinc-600">The label data is missing {missing}.</p>
       </div>
     );
   }
   return (
-    <div className={`flex items-center gap-4 rounded-xl p-4 ring-2 ${bandStyle(score.band?.id)}`}>
-      <p className="text-5xl font-bold tabular-nums">
-        {score.total}
-        <span className="text-xl font-medium"> / 100</span>
-      </p>
-      <p className="text-2xl font-semibold">{score.band?.label}</p>
+    <div className="flex items-center gap-5">
+      <div className="relative">
+        <ScoreRing total={score.total ?? 0} bandId={score.band?.id} />
+        <p className="absolute inset-0 grid place-items-center text-3xl font-semibold tabular-nums">{score.total}</p>
+      </div>
+      <div>
+        <p className="text-sm text-zinc-600">
+          Health score <span>/ 100</span>
+        </p>
+        <p className={`mt-1 inline-block rounded-full px-3 py-1 text-base font-semibold ring-1 ${bandStyle(score.band?.id)}`}>
+          {score.band?.label}
+        </p>
+      </div>
     </div>
   );
 }
@@ -83,8 +137,8 @@ function unratedNote(product: Product): string | null {
 function ComponentBars({ product }: { product: Product }) {
   const bars = componentBars(product.score);
   return (
-    <section aria-labelledby="components-heading" className="flex flex-col gap-3">
-      <h2 id="components-heading" className="text-lg font-semibold">
+    <section aria-labelledby="components-heading" className="card flex flex-col gap-4 p-5">
+      <h2 id="components-heading" className="text-base font-semibold">
         What makes up the score
       </h2>
       <ul className="flex flex-col gap-3">
@@ -95,11 +149,11 @@ function ComponentBars({ product }: { product: Product }) {
               <span>{bar.known ? `${bar.points} of ${bar.weight}` : "No data"}</span>
             </div>
             <div
-              className="mt-1 h-2 overflow-hidden rounded-full bg-zinc-200"
+              className="mt-1.5 h-2 overflow-hidden rounded-full bg-zinc-100"
               role="presentation"
             >
               <div
-                className="h-full rounded-full bg-zinc-800"
+                className="h-full rounded-full bg-emerald-600"
                 style={{ width: `${Math.round(bar.fraction * 100)}%` }}
               />
             </div>
@@ -136,147 +190,170 @@ export function ProductView({
 
   return (
     <article className="flex flex-col gap-6">
+      <nav aria-label="Breadcrumb" className="text-sm text-zinc-600">
+        <Link href="/explore" className="hover:text-zinc-900">
+          Explore
+        </Link>
+        <span aria-hidden="true"> / </span>
+        <span className="text-zinc-900">{product.name ?? "Product"}</span>
+      </nav>
+
       {product.stale && (
-        <p role="status" className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
+        <p role="status" className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
           Showing saved data. We couldn&apos;t refresh it from Open Food Facts just now.
         </p>
       )}
 
       {Object.values(product.source_by_field ?? {}).includes("contribution") && (
-        <p className="rounded-lg bg-sky-50 p-3 text-sm text-sky-900">
+        <p className="rounded-xl bg-sky-50 p-3 text-sm text-sky-900">
           Added by a user from a label photo. Not yet checked.
         </p>
       )}
 
-      <header className="flex gap-4">
-        {product.image_url && (
-          // Product photos come from Open Food Facts; next/image would need a remote allowlist.
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={product.image_url}
-            alt=""
-            className="h-24 w-24 shrink-0 rounded-lg bg-zinc-100 object-contain"
-          />
-        )}
-        <div>
-          <h1 className="text-2xl font-bold">{product.name ?? "Unnamed product"}</h1>
-          {product.brand && <p className="text-zinc-700">{product.brand}</p>}
-          <p className="text-sm text-zinc-600">Barcode {product.gtin}</p>
-        </div>
-      </header>
-
       <RecallBanner data={recalls} />
 
-      <ProductAccount gtin={product.gtin} label={product} />
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="flex min-w-0 flex-col gap-6">
+          <section className="card flex flex-col gap-6 p-6">
+            <header className="flex gap-5">
+              {product.image_url && (
+                // Product photos come from Open Food Facts; next/image would need a remote allowlist.
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={product.image_url}
+                  alt=""
+                  className="h-28 w-28 shrink-0 rounded-xl bg-zinc-50 object-contain p-2 ring-1 ring-zinc-200"
+                />
+              )}
+              <div className="min-w-0">
+                {product.brand && <p className="text-sm font-medium text-emerald-700">{product.brand}</p>}
+                <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{product.name ?? "Unnamed product"}</h1>
+                <p className="mt-1 text-sm text-zinc-600">Barcode {product.gtin}</p>
+              </div>
+            </header>
 
-      <ScoreHeader product={product} />
+            <div className="flex flex-col gap-4 border-t border-zinc-100 pt-6">
+              <ScoreHeader product={product} />
+              <div className="flex flex-wrap gap-2 text-sm">
+                <span className={`rounded-full px-3 py-1 font-medium ${BADGE_STYLES[badge.level]}`}>
+                  {badge.label}
+                </span>
+                {score.nutriscore.grade && (
+                  <span className="rounded-full bg-zinc-100 px-3 py-1">
+                    Nutri-Score {score.nutriscore.grade.toUpperCase()}, scored as{" "}
+                    {classLabel(score.nutriscore.class)}
+                  </span>
+                )}
+                {product.nova_group && (
+                  <span className="rounded-full bg-zinc-100 px-3 py-1">NOVA {product.nova_group}</span>
+                )}
+                {product.is_organic && <span className="rounded-full bg-zinc-100 px-3 py-1">Organic</span>}
+              </div>
+              {missing.length > 0 && <p className="text-sm text-zinc-600">Missing: {missing.join(", ")}.</p>}
+            </div>
+          </section>
 
-      <div className="flex flex-wrap gap-2 text-sm">
-        <span className={`rounded-full px-3 py-1 font-medium ${BADGE_STYLES[badge.level]}`}>
-          {badge.label}
-        </span>
-        {score.nutriscore.grade && (
-          <span className="rounded-full bg-zinc-100 px-3 py-1">
-            Nutri-Score {score.nutriscore.grade.toUpperCase()}, scored as{" "}
-            {classLabel(score.nutriscore.class)}
-          </span>
-        )}
-        {product.is_organic && (
-          <span className="rounded-full bg-zinc-100 px-3 py-1">Organic</span>
-        )}
-      </div>
-      {missing.length > 0 && <p className="text-sm text-zinc-600">Missing: {missing.join(", ")}.</p>}
+          <section aria-labelledby="summary-heading" className="card p-6">
+            <h2 id="summary-heading" className="text-base font-semibold">
+              In short
+            </h2>
+            <ul className="mt-3 flex flex-col gap-2">
+              {breakdown.explanation.map((sentence) => (
+                <li key={sentence} className="flex gap-3 text-zinc-800">
+                  <span aria-hidden="true" className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-600" />
+                  {sentence}
+                </li>
+              ))}
+            </ul>
+          </section>
 
-      <section aria-labelledby="summary-heading">
-        <h2 id="summary-heading" className="text-lg font-semibold">
-          In short
-        </h2>
-        <ul className="mt-2 list-disc space-y-1 pl-5">
-          {breakdown.explanation.map((sentence) => (
-            <li key={sentence}>{sentence}</li>
-          ))}
-        </ul>
-      </section>
+          <AlternativesStrip data={alternatives} />
 
-      <AlternativesStrip data={alternatives} />
-
-      <VoicePanel data={{ product, breakdown, alternatives }} />
-
-      <ComponentBars product={product} />
-
-      <section aria-labelledby="breakdown-heading" className="flex flex-col gap-4">
-        <h2 id="breakdown-heading" className="text-lg font-semibold">
-          Every rule applied
-        </h2>
-        {groups.map((group) => (
-          <div key={group.component}>
-            <h3 className="font-medium">{group.label}</h3>
-            {group.lines.length === 0 ? (
-              <p className="text-sm text-zinc-600">{group.emptyText}</p>
-            ) : (
-              <ul className="mt-1 divide-y divide-zinc-200">
-                {group.lines.map((line) => (
-                  <li key={line.key} className="flex items-start justify-between gap-3 py-2 text-sm">
-                    <div>
-                      <p className="font-medium">
-                        {line.label}
-                        {line.estimated && (
-                          <span className="ml-2 rounded bg-zinc-100 px-1.5 py-0.5 text-xs">
-                            Estimated
-                          </span>
-                        )}
-                      </p>
-                      <p className="text-zinc-700">{line.value}</p>
-                      {line.note && <p className="text-zinc-600">{line.note}</p>}
-                      {line.usStatus && (
-                        <p className="text-zinc-700">
-                          {line.usStatus.text}
-                          {line.usStatus.cfrUrl && (
-                            <>
-                              {" "}
-                              (
-                              <a className="underline" href={line.usStatus.cfrUrl}>
-                                {line.usStatus.cfr}
-                              </a>
-                              )
-                            </>
+          <section aria-labelledby="breakdown-heading" className="card flex flex-col gap-5 p-6">
+            <h2 id="breakdown-heading" className="text-base font-semibold">
+              Every rule applied
+            </h2>
+            {groups.map((group) => (
+              <div key={group.component}>
+                <h3 className="text-sm font-semibold tracking-wide text-zinc-500 uppercase">{group.label}</h3>
+                {group.lines.length === 0 ? (
+                  <p className="mt-1 text-sm text-zinc-600">{group.emptyText}</p>
+                ) : (
+                  <ul className="mt-2 divide-y divide-zinc-100">
+                    {group.lines.map((line) => (
+                      <li key={line.key} className="flex items-start justify-between gap-3 py-3 text-sm">
+                        <div>
+                          <p className="font-medium">
+                            {line.label}
+                            {line.estimated && (
+                              <span className="ml-2 rounded bg-zinc-100 px-1.5 py-0.5 text-xs">Estimated</span>
+                            )}
+                          </p>
+                          <p className="text-zinc-700">{line.value}</p>
+                          {line.note && <p className="text-zinc-600">{line.note}</p>}
+                          {line.usStatus && (
+                            <p className="text-zinc-700">
+                              {line.usStatus.text}
+                              {line.usStatus.cfrUrl && (
+                                <>
+                                  {" "}
+                                  (
+                                  <a className="underline" href={line.usStatus.cfrUrl}>
+                                    {line.usStatus.cfr}
+                                  </a>
+                                  )
+                                </>
+                              )}
+                            </p>
                           )}
-                        </p>
-                      )}
-                    </div>
-                    <div className="shrink-0 text-right">
-                      <p className="font-medium tabular-nums">
-                        {line.points}
-                        <span className="sr-only"> {line.pointsHint}</span>
-                      </p>
-                      <a
-                        className="text-xs underline"
-                        href={line.sourceUrl}
-                        aria-label={`Source for ${line.label}`}
-                      >
-                        Source
-                      </a>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <p className="font-semibold tabular-nums">
+                            {line.points}
+                            <span className="sr-only"> {line.pointsHint}</span>
+                          </p>
+                          <a
+                            className="text-xs text-emerald-700 underline"
+                            href={line.sourceUrl}
+                            aria-label={`Source for ${line.label}`}
+                          >
+                            Source
+                          </a>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ))}
+          </section>
+
+          {product.ingredients_text && (
+            <section aria-labelledby="ingredients-heading" className="card p-6">
+              <h2 id="ingredients-heading" className="text-base font-semibold">
+                Ingredients
+              </h2>
+              <p className="mt-2 text-sm leading-relaxed text-zinc-700">{product.ingredients_text}</p>
+            </section>
+          )}
+        </div>
+
+        <aside className="flex flex-col gap-6">
+          <ComponentBars product={product} />
+          <div className="card p-5">
+            <VoicePanel data={{ product, breakdown, alternatives }} />
           </div>
-        ))}
-      </section>
-
-      {product.ingredients_text && (
-        <section aria-labelledby="ingredients-heading">
-          <h2 id="ingredients-heading" className="text-lg font-semibold">
-            Ingredients
-          </h2>
-          <p className="mt-1 text-sm">{product.ingredients_text}</p>
-        </section>
-      )}
-
-      <Link href="/" className="self-start underline">
-        Scan another product
-      </Link>
+          <ProductAccount gtin={product.gtin} label={product} />
+          <div className="flex flex-col gap-2">
+            <Link href="/scan" className="btn-primary">
+              Scan another product
+            </Link>
+            <Link href="/assistant" className="btn-secondary">
+              Ask the assistant about it
+            </Link>
+          </div>
+        </aside>
+      </div>
     </article>
   );
 }
@@ -291,20 +368,19 @@ export function ProductMessage({
   action?: { href: string; label: string };
 }) {
   return (
-    <div className="flex flex-col gap-3">
-      <h1 className="text-2xl font-bold">{title}</h1>
-      <p>{body}</p>
-      {action && (
-        <Link
-          href={action.href}
-          className="self-start rounded-lg bg-zinc-900 px-4 py-2 font-medium text-white"
-        >
-          {action.label}
+    <div className="card mx-auto flex max-w-xl flex-col items-start gap-4 p-8">
+      <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+      <p className="text-zinc-700">{body}</p>
+      <div className="flex flex-wrap gap-3">
+        {action && (
+          <Link href={action.href} className="btn-primary">
+            {action.label}
+          </Link>
+        )}
+        <Link href="/lookup" className="btn-secondary">
+          Scan or type another barcode
         </Link>
-      )}
-      <Link href="/" className="self-start underline">
-        Scan or type another barcode
-      </Link>
+      </div>
     </div>
   );
 }

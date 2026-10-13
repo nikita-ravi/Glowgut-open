@@ -7,17 +7,17 @@ import { bandStyle, categoryWords } from "@/lib/present";
 export function AlternativesStrip({ data }: { data: Alternatives | null | undefined }) {
   if (!data || data.alternatives.length === 0) return null; // ALT-11
   return (
-    <section aria-labelledby="alternatives-heading">
-      <h2 id="alternatives-heading" className="text-lg font-semibold">
+    <section aria-labelledby="alternatives-heading" className="card p-6">
+      <h2 id="alternatives-heading" className="text-base font-semibold">
         Better-scored alternatives
       </h2>
       {data.category && <p className="text-sm text-zinc-600">{categoryWords(data.category)}</p>}
-      <ul className="-mx-4 mt-2 flex snap-x gap-3 overflow-x-auto px-4 pb-2">
+      <ul className="mt-3 flex snap-x gap-3 overflow-x-auto pb-2">
         {data.alternatives.map((alt) => (
           <li key={alt.gtin} className="w-40 shrink-0 snap-start">
             <Link
               href={`/p/${alt.gtin}`}
-              className="flex h-full flex-col gap-2 rounded-xl p-3 ring-1 ring-zinc-200 hover:ring-zinc-400"
+              className="flex h-full flex-col gap-2 rounded-xl bg-white p-3 ring-1 ring-zinc-200 transition hover:-translate-y-0.5 hover:shadow-md"
             >
               {alt.image_url ? (
                 // Product photos come from Open Food Facts; next/image would need a remote allowlist.
@@ -25,7 +25,7 @@ export function AlternativesStrip({ data }: { data: Alternatives | null | undefi
                 <img
                   src={alt.image_url}
                   alt=""
-                  className="h-20 w-full rounded-lg bg-zinc-100 object-contain"
+                  className="h-20 w-full rounded-lg bg-zinc-50 object-contain p-1"
                 />
               ) : (
                 <div className="h-20 w-full rounded-lg bg-zinc-100" aria-hidden="true" />

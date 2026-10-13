@@ -15,6 +15,14 @@ import {
 } from "@/lib/assistant";
 import { type SearchOutcome, searchProducts } from "@/lib/search";
 
+import { MicIcon } from "./Icons";
+
+const EXAMPLES = [
+  "I'm diabetic. Can I eat Pringles?",
+  "Is SPAM Classic ok for high blood pressure?",
+  "Peanut allergy: Reese's peanut butter cups?",
+];
+
 const CONSENT_KEY = "ofs.voice-consent"; // shared with the product page's voice panel (VOICE-7)
 
 interface Message {
@@ -195,14 +203,12 @@ export function Assistant({
             onClick={listening ? () => recognition.current?.stop() : listen}
             aria-pressed={listening}
             aria-label={listening ? "Stop listening" : "Ask by voice"}
-            className="relative flex h-28 w-28 items-center justify-center rounded-full bg-emerald-700 text-5xl text-white shadow-lg transition hover:bg-emerald-800 focus-visible:outline focus-visible:outline-4 focus-visible:outline-emerald-300"
+            className="relative flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-b from-emerald-500 to-emerald-700 text-white shadow-[0_10px_30px_-8px_rgba(4,120,87,0.6)] ring-8 ring-emerald-50 transition hover:scale-[1.03] focus-visible:outline focus-visible:outline-4 focus-visible:outline-emerald-300"
           >
             {listening && (
               <span aria-hidden="true" className="absolute inset-0 animate-ping rounded-full bg-emerald-500 opacity-60" />
             )}
-            <span aria-hidden="true" className="relative">
-              🎤
-            </span>
+            <MicIcon className="relative h-11 w-11" />
           </button>
         ) : (
           <p className="text-sm text-zinc-600">Voice isn&apos;t available in this browser. Type your question below.</p>
@@ -217,7 +223,7 @@ export function Assistant({
               window.speechSynthesis.cancel();
               setSpeaking(false);
             }}
-            className="rounded-lg px-3 py-1 text-sm ring-1 ring-zinc-300"
+            className="btn-secondary px-3 py-1.5"
           >
             Stop speaking
           </button>
@@ -225,7 +231,7 @@ export function Assistant({
       </div>
 
       {askConsent && (
-        <div role="alertdialog" aria-labelledby="assistant-mic-notice" className="rounded-lg bg-white p-3 text-sm ring-1 ring-zinc-300">
+        <div role="alertdialog" aria-labelledby="assistant-mic-notice" className="rounded-xl bg-zinc-50 p-4 text-sm ring-1 ring-zinc-200">
           <p id="assistant-mic-notice">
             Voice questions use your browser&apos;s speech service. In Chrome, your voice is sent to Google to turn it into
             text. You can type instead.
@@ -256,9 +262,9 @@ export function Assistant({
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           placeholder="e.g. I have high blood pressure, is Pringles ok?"
-          className="min-w-0 flex-1 rounded-lg border border-zinc-400 bg-white px-3 py-2 text-base"
+          className="field min-w-0 flex-1"
         />
-        <button type="submit" disabled={busy} className="rounded-lg bg-zinc-900 px-4 py-2 font-medium text-white disabled:opacity-50">
+        <button type="submit" disabled={busy} className="btn-primary disabled:opacity-50">
           Ask
         </button>
       </form>
@@ -267,14 +273,29 @@ export function Assistant({
         data.
       </p>
 
+      {messages.length === 0 && (
+        <div className="flex flex-wrap justify-center gap-2">
+          {EXAMPLES.map((q) => (
+            <button
+              key={q}
+              type="button"
+              onClick={() => void ask(q)}
+              className="rounded-full bg-zinc-100 px-3.5 py-1.5 text-sm text-zinc-800 hover:bg-zinc-200"
+            >
+              {q}
+            </button>
+          ))}
+        </div>
+      )}
+
       <ol aria-label="Conversation" aria-live="polite" className="flex flex-col gap-3">
         {messages.map((m) => (
           <li
             key={m.id}
             className={
               m.role === "you"
-                ? "self-end rounded-2xl rounded-br-sm bg-zinc-900 px-4 py-2 text-white"
-                : "self-start rounded-2xl rounded-bl-sm bg-zinc-100 px-4 py-2 text-zinc-900"
+                ? "max-w-[85%] self-end rounded-2xl rounded-br-md bg-zinc-900 px-4 py-2.5 text-white"
+                : "max-w-[85%] self-start rounded-2xl rounded-bl-md bg-emerald-50 px-4 py-2.5 text-zinc-900 ring-1 ring-emerald-100"
             }
           >
             <span className="sr-only">{m.role === "you" ? "You: " : "Assistant: "}</span>

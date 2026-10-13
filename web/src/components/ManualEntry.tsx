@@ -22,7 +22,7 @@ export function ManualEntry({ onSubmit }: { onSubmit: (gtin: string) => void }) 
 
   return (
     <form onSubmit={submit} noValidate className="flex flex-col gap-2">
-      <label htmlFor={MANUAL_INPUT_ID} className="text-sm font-medium">
+      <label htmlFor={MANUAL_INPUT_ID} className="text-sm font-medium text-zinc-800">
         Or type the barcode number
       </label>
       <div className="flex gap-2">
@@ -38,11 +38,11 @@ export function ManualEntry({ onSubmit }: { onSubmit: (gtin: string) => void }) 
           aria-invalid={error !== null}
           aria-describedby={error ? errorId : undefined}
           placeholder="e.g. 036000291452"
-          className="min-w-0 flex-1 rounded-lg border border-zinc-400 bg-white px-3 py-2 text-base text-zinc-900"
+          className="field min-w-0 flex-1"
         />
         <button
           type="submit"
-          className="rounded-lg bg-zinc-900 px-4 py-2 font-medium text-white hover:bg-zinc-700"
+          className="btn-primary"
         >
           Look up
         </button>

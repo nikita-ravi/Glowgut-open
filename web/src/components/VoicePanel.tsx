@@ -121,13 +121,13 @@ export function VoicePanel({ data }: { data: PageData }) {
   }
 
   return (
-    <section aria-labelledby="voice-heading" className="flex flex-col gap-2 rounded-xl bg-zinc-50 p-4">
+    <section aria-labelledby="voice-heading" className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <h2 id="voice-heading" className="text-lg font-semibold">
+        <h2 id="voice-heading" className="text-base font-semibold">
           Ask about this product
         </h2>
         {support.speech && (
-          <button type="button" onClick={readAloud} className="rounded-lg px-3 py-1.5 text-sm font-medium ring-1 ring-zinc-300">
+          <button type="button" onClick={readAloud} className="btn-secondary px-3 py-1.5">
             {speaking ? "Stop" : "Read aloud"}
           </button>
         )}
@@ -147,20 +147,20 @@ export function VoicePanel({ data }: { data: PageData }) {
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           placeholder="e.g. does it contain milk?"
-          className="min-w-0 flex-1 rounded-lg border border-zinc-400 bg-white px-3 py-2 text-base"
+          className="field min-w-0 flex-1 py-2"
         />
         {support.mic && (
           <button
             type="button"
             onClick={listening ? () => recognition.current?.stop() : listen}
             aria-pressed={listening}
-            className="rounded-lg px-3 py-2 ring-1 ring-zinc-300"
+            className="btn-secondary px-3 py-2"
           >
             {listening ? "Listening…" : "🎤"}
             <span className="sr-only">{listening ? "" : "Ask by voice"}</span>
           </button>
         )}
-        <button type="submit" className="rounded-lg bg-zinc-900 px-3 py-2 font-medium text-white">
+        <button type="submit" className="btn-primary px-3 py-2">
           Ask
         </button>
       </form>
