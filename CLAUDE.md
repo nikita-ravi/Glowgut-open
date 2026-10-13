@@ -34,7 +34,7 @@ Feature behaviour is defined in `specs/NNN-*.md` as numbered requirements (`**GT
 | Barcode | `barcode-detector` (BarcodeDetector polyfill on ZXing-C++ WASM). Do NOT use `html5-qrcode` (unmaintained) |
 | OCR | Robotoff nutrition extraction API first, Tesseract.js fallback in the browser |
 | Auth | Better Auth |
-| Voice | Web Speech API: `SpeechRecognition` (opt-in, after a notice) and `speechSynthesis`. Not `kokoro-js`: its phonemizer bundles GPL-3.0 eSpeak NG |
+| Voice | Assistant mic: Groq Whisper (`whisper-large-v3-turbo`) via `/api/assistant/transcribe` when `GROQ_API_KEY` is set, else Web Speech API `SpeechRecognition` (opt-in, after a notice); `speechSynthesis` for answers. Not `kokoro-js`: its phonemizer bundles GPL-3.0 eSpeak NG |
 | Assistant | Groq free tier (`openai/gpt-oss-20b`) only turns a question into fixed fields; answers are templates over label data. Optional: keyword rules without `GROQ_API_KEY` |
 | Python tooling | `uv`, `pytest`, `ruff`, `mypy` |
 | JS tooling | `pnpm`, `eslint`, `vitest`, Playwright for e2e |

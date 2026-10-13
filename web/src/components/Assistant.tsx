@@ -13,6 +13,7 @@ import {
   notFound,
   parseQuestion,
 } from "@/lib/assistant";
+import { type Recording, canRecord, startRecording, transcribe, whisperEnabled } from "@/lib/recorder";
 import { type SearchOutcome, searchProducts } from "@/lib/search";
 
 import { MicIcon } from "./Icons";
@@ -23,7 +24,19 @@ const EXAMPLES = [
   "Peanut allergy: Reese's peanut butter cups?",
 ];
 
+/** Whisper speech to text (ASSIST-19); injectable for tests. */
+export interface VoiceIO {
+  enabled: () => Promise<boolean>;
+  canRecord: () => boolean;
+  start: () => Promise<Recording>;
+  transcribe: (clip: Blob) => Promise<string | null>;
+}
+const WHISPER: VoiceIO = { enabled: whisperEnabled, canRecord, start: startRecording, transcribe };
+const MAX_RECORDING_MS = 12_000;
+export const COULDNT_HEAR = "I couldn't make that out. Try again, or type your question.";
+
 const CONSENT_KEY = "ofs.voice-consent"; // shared with the product page's voice panel (VOICE-7)
+const WHISPER_CONSENT_KEY = "ofs.voice-consent-groq"; // a new recipient needs its own notice (ASSIST-19)
 
 interface Message {
   id: number;
@@ -80,10 +93,12 @@ export function Assistant({
   search = searchProducts,
   fetchProduct = fetchProductJson,
   understand = understandQuestion,
+  voice = WHISPER,
 }: {
   search?: (q: string) => Promise<SearchOutcome>;
   fetchProduct?: (gtin: string) => Promise<AssistantProduct | null>;
   understand?: (q: string) => Promise<Parsed>;
+  voice?: VoiceIO;
 }) {
   const inputId = useId();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -92,11 +107,27 @@ export function Assistant({
   const [listening, setListening] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const [askConsent, setAskConsent] = useState(false);
+  const [whisper, setWhisper] = useState(false);
   const lastGtin = useRef<string | null>(null);
+  const recording = useRef<Recording | null>(null);
+  const autoStop = useRef<ReturnType<typeof setTimeout> | null>(null);
   const recognition = useRef<Recognition | null>(null);
   const nextId = useRef(0);
   const supported = useSyncExternalStore(noSubscribe, supportSnapshot, () => ",");
   const support = { speech: supported.startsWith("speech"), mic: supported.endsWith("mic") };
+
+  // ASSIST-19: record with Whisper only when the server has a key and the browser can record.
+  useEffect(() => {
+    let live = true;
+    if (voice.canRecord()) {
+      void voice.enabled().then((on) => {
+        if (live) setWhisper(on);
+      });
+    }
+    return () => {
+      live = false;
+    };
+  }, [voice]);
 
   useEffect(
     () => () => {
@@ -161,13 +192,50 @@ export function Assistant({
   }
 
   function listen() {
-    const Ctor = recognitionCtor();
-    if (!Ctor) return;
     let consented = false;
     try {
-      consented = localStorage.getItem(CONSENT_KEY) === "yes";
+      consented = localStorage.getItem(whisper ? WHISPER_CONSENT_KEY : CONSENT_KEY) === "yes";
     } catch {}
     if (!consented) return setAskConsent(true); // ASSIST-10, VOICE-7
+    if (whisper) return void record();
+    listenInBrowser();
+  }
+
+  async function record() {
+    try {
+      recording.current = await voice.start();
+    } catch {
+      // ASSIST-20: no mic or permission refused: use the browser's recognition if it has one.
+      setWhisper(false);
+      if (recognitionCtor()) return listenInBrowser();
+      return reply("I can't use the microphone here. Type your question instead.");
+    }
+    setListening(true);
+    autoStop.current = setTimeout(() => void finishRecording(), MAX_RECORDING_MS);
+  }
+
+  async function finishRecording() {
+    if (autoStop.current) clearTimeout(autoStop.current);
+    const current = recording.current;
+    recording.current = null;
+    setListening(false);
+    if (!current) return;
+    setBusy(true);
+    const clip = await current.stop();
+    const text = await voice.transcribe(clip);
+    setBusy(false);
+    if (text) void ask(text);
+    else reply(COULDNT_HEAR); // ASSIST-20
+  }
+
+  function stopListening() {
+    if (recording.current) return void finishRecording();
+    recognition.current?.stop();
+  }
+
+  function listenInBrowser() {
+    const Ctor = recognitionCtor();
+    if (!Ctor) return;
     try {
       const r = new Ctor();
       r.lang = "en-US";
@@ -188,7 +256,7 @@ export function Assistant({
 
   function consent() {
     try {
-      localStorage.setItem(CONSENT_KEY, "yes");
+      localStorage.setItem(whisper ? WHISPER_CONSENT_KEY : CONSENT_KEY, "yes");
     } catch {}
     setAskConsent(false);
     listen();
@@ -197,10 +265,10 @@ export function Assistant({
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col items-center gap-3 py-4">
-        {support.mic ? (
+        {support.mic || whisper ? (
           <button
             type="button"
-            onClick={listening ? () => recognition.current?.stop() : listen}
+            onClick={listening ? stopListening : listen}
             aria-pressed={listening}
             aria-label={listening ? "Stop listening" : "Ask by voice"}
             className="relative flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-b from-emerald-500 to-emerald-700 text-white shadow-[0_10px_30px_-8px_rgba(4,120,87,0.6)] ring-8 ring-emerald-50 transition hover:scale-[1.03] focus-visible:outline focus-visible:outline-4 focus-visible:outline-emerald-300"
@@ -214,7 +282,15 @@ export function Assistant({
           <p className="text-sm text-zinc-600">Voice isn&apos;t available in this browser. Type your question below.</p>
         )}
         <p className="text-sm text-zinc-600" aria-live="polite">
-          {listening ? "Listening…" : busy ? "Looking it up…" : support.mic ? "Tap and ask" : ""}
+          {listening
+            ? whisper
+              ? "Listening… tap again when you're done"
+              : "Listening…"
+            : busy
+              ? "Looking it up…"
+              : support.mic || whisper
+                ? "Tap and ask"
+                : ""}
         </p>
         {speaking && (
           <button
@@ -233,8 +309,9 @@ export function Assistant({
       {askConsent && (
         <div role="alertdialog" aria-labelledby="assistant-mic-notice" className="rounded-xl bg-zinc-50 p-4 text-sm ring-1 ring-zinc-200">
           <p id="assistant-mic-notice">
-            Voice questions use your browser&apos;s speech service. In Chrome, your voice is sent to Google to turn it into
-            text. You can type instead.
+            {whisper
+              ? "Voice questions are recorded and sent to Groq, an AI service, to turn them into text. Nothing is stored. You can type instead."
+              : "Voice questions use your browser\u2019s speech service. In Chrome, your voice is sent to Google to turn it into text. You can type instead."}
           </p>
           <div className="mt-2 flex gap-3">
             <button type="button" onClick={consent} className="font-medium underline">

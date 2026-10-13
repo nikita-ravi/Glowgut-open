@@ -159,3 +159,96 @@ describe("[ASSIST-15] [ASSIST-16] understanding with the LLM route", () => {
     expect(screen.getByText(/Questions are sent to Groq/)).toBeInTheDocument();
   });
 });
+
+describe("[ASSIST-19] [ASSIST-20] Whisper speech to text", () => {
+  const llm = vi.fn(async (q: string) => ({ conditions: [], topics: [], productQuery: q.includes("Pringles") ? "Pringles" : null }));
+  function whisperVoice(text: string | null, startFails = false) {
+    const stop = vi.fn(async () => new Blob(["a"], { type: "audio/webm" }));
+    return {
+      stop,
+      voice: {
+        enabled: vi.fn(async () => true),
+        canRecord: () => true,
+        start: vi.fn(async () => {
+          if (startFails) throw new Error("denied");
+          return { stop };
+        }),
+        transcribe: vi.fn(async () => text),
+      },
+    };
+  }
+  const mic = () => screen.findByRole("button", { name: "Ask by voice" });
+
+  it("records after its own Groq notice, then transcribes and answers", async () => {
+    localStorage.setItem("ofs.voice-consent", "yes"); // the Google notice doesn't count for Groq
+    const { voice, stop } = whisperVoice("I'm diabetic, can I eat Pringles?");
+    render(<Assistant search={found} fetchProduct={product} understand={llm} voice={voice} />);
+    await waitFor(() => expect(screen.getByText("Tap and ask")).toBeInTheDocument());
+    fireEvent.click(await mic());
+    expect(screen.getByRole("alertdialog")).toHaveTextContent("sent to Groq");
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    await waitFor(() => expect(voice.start).toHaveBeenCalled());
+    expect(localStorage.getItem("ofs.voice-consent-groq")).toBe("yes");
+    const stopButton = await screen.findByRole("button", { name: "Stop listening" });
+    expect(screen.getByText("Listening… tap again when you're done")).toBeInTheDocument();
+    fireEvent.click(stopButton);
+    await waitFor(() => expect(conversation()).toHaveTextContent("Pringles Original."));
+    expect(stop).toHaveBeenCalled();
+    expect(voice.transcribe).toHaveBeenCalled();
+    expect(conversation()).toHaveTextContent("You: I'm diabetic, can I eat Pringles?");
+  });
+
+  it("stops on its own after 12 seconds", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    localStorage.setItem("ofs.voice-consent-groq", "yes");
+    const { voice, stop } = whisperVoice("Pringles");
+    render(<Assistant search={found} fetchProduct={product} understand={llm} voice={voice} />);
+    fireEvent.click(await mic());
+    await screen.findByRole("button", { name: "Stop listening" });
+    await act(async () => vi.advanceTimersByTime(12_000));
+    await waitFor(() => expect(stop).toHaveBeenCalled());
+    vi.useRealTimers();
+  });
+
+  it("says it couldn't make it out when transcription fails", async () => {
+    localStorage.setItem("ofs.voice-consent-groq", "yes");
+    const { voice } = whisperVoice(null);
+    render(<Assistant search={found} fetchProduct={product} understand={llm} voice={voice} />);
+    fireEvent.click(await mic());
+    fireEvent.click(await screen.findByRole("button", { name: "Stop listening" }));
+    await waitFor(() => expect(conversation()).toHaveTextContent("I couldn't make that out."));
+    expect(found).not.toHaveBeenCalled();
+  });
+
+  it("falls back to the browser's recognition when the mic can't record", async () => {
+    vi.stubGlobal("webkitSpeechRecognition", FakeRecognition);
+    localStorage.setItem("ofs.voice-consent-groq", "yes");
+    const { voice } = whisperVoice("x", true);
+    render(<Assistant search={found} fetchProduct={product} understand={llm} voice={voice} />);
+    await waitFor(() => expect(voice.enabled).toHaveBeenCalled());
+    const before = FakeRecognition.instances.length;
+    fireEvent.click(await mic());
+    await waitFor(() => expect(FakeRecognition.instances.length).toBe(before + 1));
+    expect(FakeRecognition.instances.at(-1)!.start).toHaveBeenCalled();
+  });
+
+  it("says to type when there's no way to record at all", async () => {
+    localStorage.setItem("ofs.voice-consent-groq", "yes");
+    const { voice } = whisperVoice("x", true);
+    render(<Assistant search={found} fetchProduct={product} understand={llm} voice={voice} />);
+    fireEvent.click(await mic());
+    await waitFor(() => expect(conversation()).toHaveTextContent("Type your question instead."));
+  });
+
+  it("keeps the browser path when the server has no key", async () => {
+    vi.stubGlobal("webkitSpeechRecognition", FakeRecognition);
+    localStorage.setItem("ofs.voice-consent", "yes");
+    const { voice } = whisperVoice("x");
+    voice.enabled = vi.fn(async () => false);
+    render(<Assistant search={found} fetchProduct={product} understand={llm} voice={voice} />);
+    await waitFor(() => expect(voice.enabled).toHaveBeenCalled());
+    fireEvent.click(await mic());
+    expect(voice.start).not.toHaveBeenCalled();
+    expect(FakeRecognition.instances.at(-1)!.start).toHaveBeenCalled();
+  });
+});
