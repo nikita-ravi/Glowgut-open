@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from "next";
 
+import Link from "next/link";
+
 import { RegisterServiceWorker } from "@/components/RegisterServiceWorker";
+import { UserMenu } from "@/components/UserMenu";
 
 import "./globals.css";
 
@@ -21,6 +24,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className="h-full antialiased">
       <body className="flex min-h-full flex-col">
+        <header className="mx-auto flex w-full max-w-xl items-center justify-between px-4 pt-4">
+          <Link href="/" className="font-semibold">
+            Open Food Scanner
+          </Link>
+          <UserMenu />
+        </header>
         <main className="mx-auto w-full max-w-xl flex-1 px-4 py-6">{children}</main>
         <RegisterServiceWorker />
       </body>

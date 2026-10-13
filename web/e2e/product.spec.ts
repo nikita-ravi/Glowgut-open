@@ -110,3 +110,18 @@ test("[SEARCH-7] [SEARCH-8] search by name, pick a suggestion, open the product"
   await expect(page).toHaveURL(/\/p\/\d{13}$/);
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Oat Bars");
 });
+
+test("[ACC-4] [ACC-16] signed out: a Sign in button, an account prompt, and the privacy page", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
+  await page.goto("/account");
+  await expect(page.getByRole("button", { name: "Sign in with Google" })).toBeVisible();
+  for (const path of ["/account", "/privacy"]) {
+    await page.goto(path);
+    await page.getByRole("heading", { level: 1 }).waitFor();
+    const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+    expect(results.violations, `${path}: ${results.violations.map((v) => v.id)}`).toEqual([]);
+  }
+});

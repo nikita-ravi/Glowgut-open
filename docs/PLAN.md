@@ -71,10 +71,10 @@ Every task follows the spec-driven workflow in `specs/README.md`: spec first, th
 
 ## M5: Accounts (week 8)
 
-- [ ] Better Auth with Google sign-in; session in an httpOnly cookie. FastAPI verifies the Better Auth JWT (JWKS)
-- [ ] Account page: profile, allergens/diets, scan history, delete-everything. Write the spec for history features first
-- [ ] RLS policies on `scan_history` and `favorites`; tests prove user A can't read user B's rows
-- [ ] `GET/DELETE /me/history`, favorites, `PUT /me/preferences`; allergen/diet conflicts flagged on the product page
+- [x] Better Auth with Google sign-in; session in an httpOnly cookie. FastAPI verifies the Better Auth JWT (JWKS) *(spec 018; real login needs Google OAuth keys)*
+- [x] Account page: profile, allergens/diets, scan history, delete-everything *(spec 018)*
+- [x] RLS policies on `scan_history`, `favorites` and `user_preferences`; tests prove user A can't read user B's rows
+- [x] `GET/DELETE /me/history`, favorites, `PUT /me/preferences`; allergen/diet conflicts flagged on the product page
 
 **⛳ MVP demo** at the end of week 8.
 

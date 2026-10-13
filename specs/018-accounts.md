@@ -1,6 +1,6 @@
 # 018: Accounts
 
-Status: draft
+Status: implemented
 
 Optional sign-in with Google, so people can keep a scan history, save favorites, and get
 warnings for their allergens and diets. **Everything else keeps working signed out.** Scan

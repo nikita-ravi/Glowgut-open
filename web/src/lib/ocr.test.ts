@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const recognize = vi.fn(async (_image: unknown) => ({ data: { text: "Calories 230" } }));
+const recognize = vi.fn<(image: unknown) => Promise<{ data: { text: string } }>>(async () => ({
+  data: { text: "Calories 230" },
+}));
 const terminate = vi.fn(async () => {});
 const createWorker = vi.fn(async () => ({ recognize, terminate }));
 vi.mock("tesseract.js", () => ({ createWorker }));

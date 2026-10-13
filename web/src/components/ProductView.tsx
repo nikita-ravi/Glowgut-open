@@ -12,6 +12,7 @@ import {
 } from "@/lib/present";
 
 import { AlternativesStrip } from "./AlternativesStrip";
+import { ProductAccount } from "./ProductAccount";
 import { RecallBanner } from "./RecallBanner";
 
 const BADGE_STYLES = {
@@ -140,6 +141,8 @@ export function ProductView({
       </header>
 
       <RecallBanner data={recalls} />
+
+      <ProductAccount gtin={product.gtin} label={product} />
 
       <ScoreHeader product={product} />
 
