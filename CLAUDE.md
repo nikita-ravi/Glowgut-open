@@ -71,6 +71,7 @@ uv run pytest --cov                           # same, with coverage (fails under
 uv run python -m pipeline.golden              # golden gate on the full US extract (>= 99% Nutri-Score match with OFF)
 uv run ruff check . && uv run ruff format --check . && uv run mypy api pipeline   # lint and types
 uv run fastapi dev api/app/main.py            # API on :8000
+scripts/warm-cache.sh                         # after starting the API: pre-load demo products and Explore (spec 025)
 cp web/.env.example web/.env.local            # accounts: Better Auth secret, DB URL, Google OAuth keys
 cd web && corepack pnpm@10.18.3 install       # web deps (also copies the ZXing .wasm into public/)
 cd web && pnpm dev                            # PWA on :3000; reads API_URL (default http://localhost:8000)
@@ -110,6 +111,7 @@ Update this section as soon as a command changes.
 - USDA Branded Foods has no NOVA group, no Nutri-Score, and no parsed additives. Derive them from its ingredient text and nutrient rows.
 - USDA stores barcodes as 14-digit GTINs: search FoodData Central with `gtin.zfill(14)`; the 12- or 13-digit form finds nothing. `DEMO_KEY` allows ~10 requests an hour; set `USDA_API_KEY` (free at api.data.gov) for real use.
 - USDA spells categories inconsistently (`A  B`, `A - B`, `A – B`). `usda_mapping.category_key` normalizes them; key `config/usda_categories.yaml` the same way.
+- The API caches public GET responses in memory (spec 025) and serves the last good copy when the database is unreachable. Responses carry `X-Cache: hit|miss|stale`. Integration tests turn it off via `app.state.response_cache = None`.
 - The Supabase free tier pauses after 7 idle days. The weekly data-refresh job (spec 020) keeps it active.
 - `.github/workflows/data-refresh.yml` does nothing until the repo has a `DATABASE_URL` secret (asyncpg form). Optional: `OFF_CONTACT` and `USDA_BRANDED_ZIP_URL` repository variables.
 - Any scoring change must keep the golden gate at >= 99% (`api/tests/golden`). Run `pipeline.golden` on the full extract and read `reports/golden_mismatches.csv` before changing class tags or thresholds.

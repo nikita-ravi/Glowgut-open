@@ -63,3 +63,4 @@ and noting why; its tests go with it.
 | [022-voice](022-voice.md) | Ask about a product by voice or text; read aloud | implemented |
 | [023-assistant](023-assistant.md) | Voice assistant tab: ask about any product, by condition | implemented |
 | [024-explore](024-explore.md) | Explore the top foods per category | implemented |
+| [025-response-cache](025-response-cache.md) | In-memory cache of public responses; stale on outage | implemented |

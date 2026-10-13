@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 import httpx
 from fastapi import FastAPI
 
-from app import problems
+from app import problems, response_cache
 from app.db.session import make_engine, make_sessionmaker
 from app.routers import contributions, explore, me, methodology, products, search
 from app.services.off_client import OFFClient
@@ -17,6 +17,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings = get_settings()
     engine = make_engine(settings.database_url)
     app.state.sessionmaker = make_sessionmaker(engine)
+    app.state.response_cache = response_cache.ResponseCache(
+        settings.response_cache_ttl_s, settings.response_cache_max
+    )
     async with httpx.AsyncClient(timeout=settings.off_timeout_s) as http:
         app.state.http = http
         app.state.off = OFFClient(http, settings.off_base_url, settings.user_agent)
@@ -30,6 +33,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(title="Open Food Scanner API", version=APP_VERSION, lifespan=lifespan)
 problems.install(app)
+response_cache.install(app)
 app.include_router(products.router)
 app.include_router(search.router)
 app.include_router(explore.router)

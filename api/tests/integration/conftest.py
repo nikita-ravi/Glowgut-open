@@ -96,6 +96,7 @@ async def client(
     app.dependency_overrides[get_now] = lambda: NOW
     async with httpx.AsyncClient() as off_http:
         app.state.http = off_http
+        app.state.response_cache = None  # specs/025: every test sees the database
         app.state.off = OFFClient(off_http, OFF_BASE, USER_AGENT)
         app.state.usda = USDAClient(off_http, USDA_BASE, "TEST_KEY", USER_AGENT)
         transport = httpx.ASGITransport(app=app)
