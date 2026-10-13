@@ -29,6 +29,10 @@ derivatives. EFSA intake values (ADI) keep coming from the Open Food Facts addit
   punctuation and extra spaces removed. Only exact matches count. An additive with no match
   has no US status.
 - **FDA-4** The run reports how many additives got a US status.
+- **FDA-7** If the export can't be downloaded, or what comes back isn't the inventory (an error
+  or block page), the bad response is not cached. The additives load still completes with a
+  warning, and stored US statuses are left as they were. An FDA outage never fails a data run
+  or CI.
 
 ## API and page
 

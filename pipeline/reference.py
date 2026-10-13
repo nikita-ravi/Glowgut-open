@@ -94,15 +94,28 @@ def add_us_status(rows: list[dict[str, Any]], index: dict[str, fda_status.UsStat
     return matched
 
 
+def us_status_index(
+    refresh: bool, user_agent: str, cache: Path = fda_status.CACHE
+) -> dict[str, fda_status.UsStatus] | None:
+    """The FDA index, or None if FDA is unavailable (FDA-7). None leaves stored statuses alone,
+    because rows without us_status/fda_cfr_ref don't update those columns."""
+    try:
+        if refresh or not cache.exists():
+            fda_status.download(user_agent, cache)
+        return fda_status.load(cache)
+    except fda_status.FDAUnavailable as exc:
+        print(f"warning: FDA inventory unavailable ({exc}); existing US statuses are unchanged")
+        return None
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--refresh", action="store_true", help="re-download the FDA inventory")
     args = parser.parse_args()
     settings = get_settings()
     rows = [parse_entry(tag, entry) for tag, entry in load_taxonomy().items()]
-    if args.refresh or not fda_status.CACHE.exists():
-        fda_status.download(settings.user_agent)
-    us = add_us_status(rows, fda_status.load())
+    index = us_status_index(args.refresh, settings.user_agent)
+    us = add_us_status(rows, index) if index is not None else 0
     asyncio.run(upsert(rows, settings.database_url))
     rated = sum(1 for r in rows if r["risk_level"] is not None)
     print(f"additives: {len(rows)} loaded, {rated} with an EFSA overexposure rating, "
