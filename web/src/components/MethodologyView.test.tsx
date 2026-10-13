@@ -71,7 +71,7 @@ describe("[METH-6] about page", () => {
     }
     expect(screen.getByText(/Open Database License \(ODbL\)/)).toBeInTheDocument();
     expect(screen.getByText(/not medical advice/)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /github.com/ })).toHaveAttribute("href", "https://github.com/nikita-ravi/Glowgut-open");
+    expect(screen.getByRole("link", { name: "github.com/nikita-ravi/Glowgut-open" })).toHaveAttribute("href", "https://github.com/nikita-ravi/Glowgut-open");
   });
 });
 
