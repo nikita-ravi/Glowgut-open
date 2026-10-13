@@ -115,7 +115,7 @@ test("[ACC-4] [ACC-16] signed out: a Sign in button, an account prompt, and the 
   page,
 }) => {
   await page.goto("/");
-  await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();
   await page.goto("/account");
   await expect(page.getByRole("button", { name: "Sign in with Google" })).toBeVisible();
   for (const path of ["/account", "/privacy"]) {

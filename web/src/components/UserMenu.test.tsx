@@ -15,12 +15,11 @@ vi.mock("@/lib/auth-client", () => ({
 }));
 vi.mock("next/navigation", () => ({ usePathname: () => "/p/0036000291452" }));
 
-describe("[ACC-4] header account menu", () => {
-  it("offers Sign in when signed out, returning to the current page", () => {
+describe("[ACC-4] [ACC-20] header account menu", () => {
+  it("links to Sign in when signed out, returning to the current page", () => {
     mocks.session = null;
     render(<UserMenu />);
-    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
-    expect(mocks.signIn).toHaveBeenCalledWith("/p/0036000291452");
+    expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/sign-in?next=%2Fp%2F0036000291452");
   });
 
   it("shows the account link and signs out when signed in", () => {

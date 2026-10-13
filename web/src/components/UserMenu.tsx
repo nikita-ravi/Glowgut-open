@@ -3,22 +3,21 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { signInWithGoogle, signOut, useSession } from "@/lib/auth-client";
+import { signOut, useSession } from "@/lib/auth-client";
 
-// ACC-4: "Sign in" when signed out; avatar, account link and sign out when signed in.
+// ACC-4, ACC-20: "Sign in" (to /sign-in) when signed out; avatar, account link and sign out when signed in.
 export function UserMenu() {
   const { data, isPending } = useSession();
   const path = usePathname();
   if (isPending) return null;
   if (!data) {
     return (
-      <button
-        type="button"
-        onClick={() => signInWithGoogle(path)}
+      <Link
+        href={`/sign-in?next=${encodeURIComponent(path)}`}
         className="rounded-lg px-3 py-1.5 text-sm font-medium ring-1 ring-zinc-300 hover:bg-zinc-100"
       >
         Sign in
-      </button>
+      </Link>
     );
   }
   return (

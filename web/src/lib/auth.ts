@@ -1,4 +1,4 @@
-// Better Auth: optional Google sign-in (spec 018). Server-only.
+// Better Auth: optional sign-in with Google or email and password (spec 018). Server-only.
 import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
 import { jwt } from "better-auth/plugins";
@@ -21,12 +21,12 @@ export const authOptions = {
   database: new Pool({ connectionString: process.env.AUTH_DATABASE_URL }),
   socialProviders: {
     google: {
-      // ACC-1: Google is the only way in. No passwords.
       clientId: process.env.GOOGLE_CLIENT_ID ?? "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
     },
   },
-  emailAndPassword: { enabled: false },
+  // ACC-19: email and password; Better Auth stores only a salted scrypt hash (ACC-1).
+  emailAndPassword: { enabled: true, minPasswordLength: 8, autoSignIn: true },
   databaseHooks: {
     account: {
       create: { before: async (account: Record<string, unknown>) => ({ data: withoutProviderTokens(account) }) },
