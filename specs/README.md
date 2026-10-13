@@ -56,3 +56,4 @@ and noting why; its tests go with it.
 | [015-golden-gate](015-golden-gate.md) | Nutri-Score agreement with Open Food Facts (≥ 99%) | implemented |
 | [016-search](016-search.md) | Search by product or brand name | implemented |
 | [017-contributions](017-contributions.md) | Add a missing product from a label photo | implemented |
+| [018-accounts](018-accounts.md) | Google sign-in, preferences, history, favorites, allergen warnings | draft |
