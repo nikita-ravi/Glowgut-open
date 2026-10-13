@@ -28,7 +28,8 @@ if the API has a bug.
   - `allergens`: any of the US major nine (milk, eggs, fish, crustacean shellfish, tree
     nuts, peanuts, wheat, soybeans, sesame);
   - `diets`: any of vegan, vegetarian, gluten-free;
-  - `save_history`: whether scans are saved (see open question 1).
+  - `save_history`: whether scans are saved. **On by default**, with a "Pause history"
+    switch on the account page.
 
   Unknown values → `422`.
 
@@ -54,6 +55,8 @@ if the API has a bug.
 - **ACC-10** `GET /me/history?cursor=` returns the user's scans, newest first, 50 per page,
   with each product's name, brand, image and the score saved then. The account page lists
   them grouped by day.
+- **ACC-17** History keeps the newest 1,000 scans per user; older rows are deleted as new
+  ones arrive. Nothing else expires it.
 - **ACC-11** `DELETE /me/history/{id}` removes one scan. `DELETE /me/history` removes all
   of them in one call (hard rule 6).
 
@@ -67,7 +70,9 @@ if the API has a bug.
 
 - **ACC-13** `DELETE /me` deletes the user, their sessions, preferences, history and
   favorites in one transaction. Their contributions stay but lose the link to them
-  (`user_id = null`). The account page asks for confirmation first.
+  (`user_id = null`).
+- **ACC-18** A contribution made while signed in is linked to the user (`contributions.user_id`)
+  and listed on their account page. The account page asks for confirmation first.
 
 ## Privacy and isolation
 
@@ -80,13 +85,10 @@ if the API has a bug.
   Google, during sign-in.
 - **ACC-16** The privacy page (M6) lists exactly what is stored, why, and how to delete it.
 
-## Open questions (for review)
+## Decisions (approved 2026-10-12)
 
-1. **History on by default?** Proposed: on, with a clear "Pause history" switch on the
-   account page. The alternative is off until the user turns it on.
-2. **How long to keep history?** Proposed: until the user deletes it, capped at the newest
-   1,000 scans. The alternative is to auto-delete scans older than 12 months.
-3. **Sign-in providers:** Google only for now, as requested? Better Auth can add Apple or
-   email links later.
-4. **Contributions while signed in:** link them to the user (so they can see what they
-   added) or keep them anonymous? Proposed: link them, and unlink on account deletion.
+1. History is on by default, with a "Pause history" switch (ACC-5).
+2. History keeps the newest 1,000 scans until the user deletes them (ACC-17).
+3. Google is the only sign-in provider for now (ACC-1).
+4. Contributions made while signed in are linked to the user, and unlinked on account
+   deletion (ACC-13, ACC-18).
