@@ -88,7 +88,7 @@ export function SearchBox({
 
   return (
     <div className="relative flex flex-col gap-2">
-      <label htmlFor={inputId} className="text-sm font-medium">
+      <label htmlFor={inputId} className="text-sm font-medium text-zinc-800">
         Search by name or brand
       </label>
       <input
@@ -106,7 +106,7 @@ export function SearchBox({
         onBlur={() => setTimeout(() => setOpen(false), 150)}
         onFocus={() => results.length && setOpen(true)}
         placeholder="e.g. cheerios, oat milk"
-        className="rounded-lg border border-zinc-400 bg-white px-3 py-2 text-base text-zinc-900"
+        className="field"
       />
       <p role="status" className="min-h-5 text-sm text-zinc-600">
         {announcement}
@@ -116,7 +116,7 @@ export function SearchBox({
         role="listbox"
         aria-label="Search results"
         hidden={!expanded}
-        className="absolute top-[4.75rem] z-10 w-full overflow-hidden rounded-lg bg-white shadow-lg ring-1 ring-zinc-200"
+        className="absolute top-[5.25rem] z-20 w-full overflow-hidden rounded-xl bg-white shadow-xl ring-1 ring-zinc-200"
       >
         {shown.map((r, i) => (
           <li

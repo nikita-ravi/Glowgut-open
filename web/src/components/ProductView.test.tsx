@@ -161,7 +161,7 @@ describe("[PAGE-11] error states render a message and a way back", () => {
     expect(screen.getByRole("heading", { name: "We couldn't find this product" })).toBeVisible();
     expect(screen.getByRole("link", { name: "Scan or type another barcode" })).toHaveAttribute(
       "href",
-      "/",
+      "/lookup",
     );
   });
 });

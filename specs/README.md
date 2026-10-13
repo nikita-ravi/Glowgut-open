@@ -62,3 +62,4 @@ and noting why; its tests go with it.
 | [021-deploy](021-deploy.md) | Deployment: Docker API, Render, Vercel, Supabase | implemented |
 | [022-voice](022-voice.md) | Ask about a product by voice or text; read aloud | implemented |
 | [023-assistant](023-assistant.md) | Voice assistant tab: ask about any product, by condition | implemented |
+| [024-explore](024-explore.md) | Explore the top foods per category | implemented |

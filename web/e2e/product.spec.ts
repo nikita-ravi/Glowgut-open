@@ -53,7 +53,7 @@ test("[SCAN-2] [SCAN-11] scanning loads nothing from third-party hosts", async (
   const hosts = new Set<string>();
   page.on("request", (req) => hosts.add(new URL(req.url()).hostname));
 
-  await page.goto("/");
+  await page.goto("/scan");
   await page.getByRole("button", { name: "Scan a barcode" }).click();
   await expect(page.getByRole("button", { name: "Stop scanning" })).toBeVisible();
   await page.waitForTimeout(1500); // let the detector (and WASM, if used) load and run
@@ -73,7 +73,7 @@ test("[PWA-2] home opens offline; product data is never served from the cache", 
 
   await context.setOffline(true);
   await page.reload();
-  await expect(page.getByRole("heading", { name: "Open Food Scanner" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: /Know what's really/ })).toBeVisible();
 
   const failed = await page.goto(`/p/${GTIN}`).catch(() => null);
   if (failed) await expect(page.getByText("Crunchy Oat Bars")).toHaveCount(0);
@@ -155,4 +155,22 @@ test("[ASSIST-9] [ASSIST-11] the assistant answers a typed health question and i
   );
   const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
   expect(results.violations, results.violations.map((v) => v.id).join(",")).toEqual([]);
+});
+
+test("[EXPLORE-8] [EXPLORE-7] the landing page leads into the app tabs", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("heading", { level: 1, name: /Know what's really/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "No camera? Look it up." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Three ways in. One honest score." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "The best in each aisle" })).toBeVisible();
+  const tabs = page.getByRole("navigation", { name: "App" });
+  await tabs.getByRole("link", { name: "Explore" }).click();
+  await expect(page).toHaveURL("/explore");
+  await expect(page.getByRole("heading", { level: 1, name: "Top foods in every aisle" })).toBeVisible();
+  await expect(tabs.getByRole("link", { name: "Explore" })).toHaveAttribute("aria-current", "page");
+  await tabs.getByRole("link", { name: "Lookup" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Find any product" })).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Search by name or brand" })).toBeVisible();
+  const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+  expect(results.violations.map((v) => v.id)).toEqual([]);
 });

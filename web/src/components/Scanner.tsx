@@ -128,7 +128,7 @@ export function Scanner({
   return (
     <section aria-label="Barcode scanner" className="flex flex-col gap-3">
       <div
-        className={`relative overflow-hidden rounded-xl bg-black ${active ? "aspect-[3/4]" : "hidden"}`}
+        className={`relative overflow-hidden rounded-2xl bg-black ${active ? "aspect-[3/4]" : "hidden"}`}
       >
         <video ref={videoRef} muted playsInline className="h-full w-full object-cover" />
         <div
@@ -141,7 +141,7 @@ export function Scanner({
           <button
             type="button"
             onClick={stop}
-            className="flex-1 rounded-lg border border-zinc-400 px-4 py-3 font-medium"
+            className="btn-secondary flex-1"
           >
             Stop scanning
           </button>
@@ -150,7 +150,7 @@ export function Scanner({
               type="button"
               onClick={toggleTorch}
               aria-pressed={torchOn}
-              className="rounded-lg border border-zinc-400 px-4 py-3 font-medium"
+              className="btn-secondary"
             >
               {torchOn ? "Light off" : "Light on"}
             </button>
@@ -160,7 +160,7 @@ export function Scanner({
         <button
           type="button"
           onClick={start}
-          className="rounded-xl bg-emerald-700 px-4 py-4 text-lg font-semibold text-white hover:bg-emerald-800"
+          className="btn-accent w-full py-4 text-base"
         >
           Scan a barcode
         </button>
