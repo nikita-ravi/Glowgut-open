@@ -19,6 +19,10 @@ class Settings(BaseSettings):
     off_user: str | None = None  # CONTRIB-9: sharing with OFF is offered only when both are set
     off_password: str | None = None
     contributions_per_hour: int = 20  # CONTRIB-8
+    # ACC-3: the web app's Better Auth issues the JWTs the API accepts.
+    auth_jwks_url: str = "http://localhost:3000/api/auth/jwks"
+    auth_issuer: str = "http://localhost:3000"
+    auth_audience: str = "http://localhost:3000"
 
     @property
     def user_agent(self) -> str:

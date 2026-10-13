@@ -6,6 +6,7 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends, Request, Response
 from sqlalchemy import insert
 
+from app.auth import MaybeUserId
 from app.db.models import Contribution, Product
 from app.problems import Problem
 from app.routers.products import Session, get_now, product_body
@@ -51,6 +52,7 @@ async def contribute(
     settings: Annotated[Settings, Depends(get_settings)],
     limiter: Annotated[RateLimiter, Depends(get_limiter)],
     now: Annotated[datetime, Depends(get_now)],
+    user_id: MaybeUserId,
 ) -> dict[str, Any]:
     try:
         gtin = normalize(body.gtin)  # CONTRIB-4
@@ -71,6 +73,7 @@ async def contribute(
     extracted = body.model_dump(exclude={"share_with_off"})
     await session.execute(insert(Contribution).values(
         gtin=gtin, extracted=extracted, status="accepted", shared_with_off=shared,
+        user_id=user_id,  # ACC-18: linked when signed in
     ))  # fmt: skip
     await session.commit()  # CONTRIB-6
     product = await session.get(Product, gtin, populate_existing=True)
