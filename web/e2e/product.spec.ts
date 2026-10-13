@@ -144,7 +144,7 @@ test("[ASSIST-9] [ASSIST-11] the assistant answers a typed health question and i
   await page.getByRole("link", { name: /Ask the assistant/ }).click();
   await expect(page).toHaveURL("/assistant");
   await page.getByLabel("Your question").fill("I'm diabetic, can I eat crunchy oat bars?");
-  await page.getByRole("button", { name: "Ask" }).click();
+  await page.getByRole("button", { name: "Ask", exact: true }).click();
   const conversation = page.getByRole("list", { name: "Conversation" });
   await expect(conversation).toContainText("Crunchy Oat Bars");
   await expect(conversation).toContainText("For blood sugar: Sugars: 12 g per 100 g, which is medium");
