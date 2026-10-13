@@ -231,3 +231,13 @@ recalls: # specs/010
   # RECALL-6: words that say nothing about which product a recall is about.
   stop_words: [and, the, with, for, from, original, classic, flavor, flavored, natural,
                organic, style, brand, size, pack, family, new, made, real, pure, fresh]
+
+# METH-2: one entry per engine_version, newest last. Must match the table in
+# specs/005-engine.md (a test checks it). Documentation only: no effect on scores.
+changelog:
+  - version: "0.1.0"
+    change: "First version: Nutri-Score 2023, OFF-taxonomy additives, NOVA."
+  - version: "0.2.0"
+    change: "Missing fruit/vegetable share and NOVA group are estimated from the ingredient list (spec 014), flagged `estimated`."
+  - version: "0.3.0"
+    change: "Found by the golden gate (spec 015): only spring and mineral waters are in the water class; olive, rapeseed and walnut oils count as 100% fruit/vegetables (NS-22)."

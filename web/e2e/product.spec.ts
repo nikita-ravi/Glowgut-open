@@ -125,3 +125,14 @@ test("[ACC-4] [ACC-16] signed out: a Sign in button, an account prompt, and the 
     expect(results.violations, `${path}: ${results.violations.map((v) => v.id)}`).toEqual([]);
   }
 });
+
+test("[METH-8] methodology and about pages are accessible and show the API's numbers", async ({ page }) => {
+  await page.goto("/methodology");
+  await expect(page.getByText("60·N + 30·A + 10·P")).toBeVisible();
+  for (const path of ["/methodology", "/about"]) {
+    await page.goto(path);
+    await page.getByRole("heading", { level: 1 }).waitFor();
+    const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+    expect(results.violations, `${path}: ${results.violations.map((v) => v.id)}`).toEqual([]);
+  }
+});

@@ -23,7 +23,18 @@ const BADGE_STYLES = {
 
 export function ProductFooter() {
   return (
-    <footer className="mt-10 border-t border-zinc-200 pt-4 text-sm text-zinc-600">
+    <footer className="mx-auto mt-10 w-full max-w-xl border-t border-zinc-200 px-4 py-4 text-sm text-zinc-600">
+      <nav aria-label="Site" className="mb-2 flex gap-4">
+        <Link href="/methodology" className="underline">
+          How the score works
+        </Link>
+        <Link href="/about" className="underline">
+          About
+        </Link>
+        <Link href="/privacy" className="underline">
+          Privacy
+        </Link>
+      </nav>
       <p>
         Data from{" "}
         <a className="underline" href="https://world.openfoodfacts.org">

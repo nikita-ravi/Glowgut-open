@@ -57,3 +57,4 @@ and noting why; its tests go with it.
 | [016-search](016-search.md) | Search by product or brand name | implemented |
 | [017-contributions](017-contributions.md) | Add a missing product from a label photo | implemented |
 | [018-accounts](018-accounts.md) | Google sign-in, preferences, history, favorites, allergen warnings | implemented |
+| [019-launch-pages](019-launch-pages.md) | Methodology and About pages, site footer | implemented |

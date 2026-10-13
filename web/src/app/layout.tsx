@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 
+import { ProductFooter as SiteFooter } from "@/components/ProductView";
 import { RegisterServiceWorker } from "@/components/RegisterServiceWorker";
 import { UserMenu } from "@/components/UserMenu";
 
@@ -35,6 +36,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           </Suspense>
         </header>
         <main className="mx-auto w-full max-w-xl flex-1 px-4 py-6">{children}</main>
+        <SiteFooter />
         <RegisterServiceWorker />
       </body>
     </html>
