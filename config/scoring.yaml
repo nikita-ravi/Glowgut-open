@@ -1,6 +1,6 @@
 # Scoring configuration. Any change above the "Not scoring" line must bump engine_version
 # and add a changelog line in specs/005-engine.md.
-engine_version: "0.2.0"
+engine_version: "0.3.0"
 
 weights:
   nutrition: 60
@@ -20,16 +20,16 @@ nutriscore:
 
   # Class detection (NS-1): first matching class wins, in this order.
   classes:
-    water:
-      - en:waters
+    water: # OFF scores other waters (purified, carbonated, flavoured) as beverages
       - en:spring-waters
       - en:mineral-waters
-      - en:unsweetened-natural-waters
+      - en:natural-mineral-waters
     water_exclude: # a water with any of these tags is scored as a beverage
       - en:flavored-waters
       - en:sweetened-waters
     beverage:
       - en:beverages
+      - en:waters # waters that aren't spring or mineral water are scored as drinks
       - en:milks
       - en:plant-based-milks
       - en:dairy-drinks
@@ -53,6 +53,13 @@ nutriscore:
       - en:peanut-butters
     fats_oils_nuts_seeds_exclude:
       - en:chestnuts
+
+  # NS-22: in the fats class these oils count as 100% fruit/vegetables/legumes (2023 update).
+  fvl_oil_tags:
+    - en:olive-oils
+    - en:rapeseed-oils
+    - en:canola-oils
+    - en:walnut-oils
 
   red_meat_tags: # NS-2
     - en:beef

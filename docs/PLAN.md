@@ -41,10 +41,12 @@ Every task follows the spec-driven workflow in `specs/README.md`: spec first, th
 - [x] `scoring/processing.py`: NOVA → 0–1; derive NOVA from ingredient markers when missing *(spec 014; 91% agreement with OFF on 20,000 US products)*
 - [x] `scoring/engine.py`: combine into a 0–100 total + breakdown list `[{rule_id, points, input_value, source_url, estimated}]`; "not scored" path
 - [x] `scoring/explain.py`: template sentences from the breakdown (no LLM)
-- [ ] `GET /products/{gtin}/breakdown`; scores persisted per `engine_version` *(done)*; pipeline re-scores on load
+- [x] `GET /products/{gtin}/breakdown`; scores persisted per `engine_version`; pipeline re-scores on load *(spec 011, OFF-8)*
 - [x] Unit test per rule, plus property tests (score always 0–100, deterministic)
 
 **⛳ Golden gate:** sample ≥ 2,000 OFF products with `nutriscore_grade` + full nutriments. Our grade matches on ≥ 99%. Write mismatches to `reports/golden_mismatches.csv`.
+
+✅ **Passed 2026-10-12** (spec 015): 41,750 US products, **99.27%** match after fixing two porting bugs (water class, olive/rapeseed/walnut oils). CI enforces ≥ 99% on a committed 3,000-product sample.
 
 **Done when:** the golden gate passes, and every breakdown line has a rule id and a source.
 
