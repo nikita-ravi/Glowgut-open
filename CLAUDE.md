@@ -44,7 +44,7 @@ Feature behaviour is defined in `specs/NNN-*.md` as numbered requirements (`**GT
 ```
 pipeline/        offline data: reference.py (additives), recalls.py (openFDA), off_bulk.py + load.py (bulk OFF import), usda_bulk.py (USDA gap-fill)
 specs/           feature specs with requirement IDs (the source of truth for behaviour)
-api/app/         FastAPI app: main.py, routers/ (products, search), services/ (gtin, off_client, off_mapping, lookup, alternatives, recalls), db/
+api/app/         FastAPI app: main.py, routers/ (products, search, contributions), services/ (gtin, off_client, off_mapping, lookup, alternatives, recalls), db/
 api/app/scoring/ engine.py, nutriscore_2023.py, additives.py, processing.py, explain.py, config.py
 api/migrations/  Alembic migrations
 api/tests/       unit/, integration/ (Docker Postgres, OFF mocked with respx), pipeline/, golden/ (3,000-product ODbL sample; CI enforces >= 99%)
@@ -95,6 +95,7 @@ Update this section as soon as a command changes.
 - `fastapi[standard]` pulls in an OpenTelemetry exporter. Don't use it: depend on `fastapi`, `fastapi-cli` and `uvicorn[standard]` instead (privacy rule 6).
 - This is Next.js 16: read `web/node_modules/next/dist/docs/` before writing Next code. With Cache Components on, route `params` are request-time data and must be read inside `<Suspense>`.
 - Next 16 keeps the previous route mounted but hidden after navigation. In Playwright, scope text queries (e.g. to `footer`) or they match the hidden page too.
+- Tesseract.js (label photos) also defaults to a CDN. `src/lib/ocr.ts` points it at `/tesseract/`, filled by `scripts/copy-ocr-assets.mjs` at install; keep it that way (spec 017).
 - `barcode-detector` fetches its WASM from jsDelivr by default. `src/lib/detector.ts` overrides that to `/zxing/`; keep it that way (spec 007, SCAN-11).
 - EFSA OpenFoodTox is CC BY-ND 4.0 (no derivatives): don't import it. ADIs come from the OFF taxonomy (ODbL).
 - FDA's "Substances Added to Food" export is a CSV despite its `downloadxls` URL, with a preamble before the header. Cells look like `=T("172.170")`.

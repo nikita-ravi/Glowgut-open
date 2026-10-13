@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     usda_base_url: str = "https://api.nal.usda.gov"
     usda_api_key: str = "DEMO_KEY"  # free; a personal api.data.gov key raises the rate limit
     usda_timeout_s: float = 4.0
+    off_user: str | None = None  # CONTRIB-9: sharing with OFF is offered only when both are set
+    off_password: str | None = None
+    contributions_per_hour: int = 20  # CONTRIB-8
 
     @property
     def user_agent(self) -> str:

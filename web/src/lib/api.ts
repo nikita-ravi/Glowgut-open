@@ -43,6 +43,7 @@ export interface Product {
   score: Score;
   attribution: string;
   additives?: ProductAdditive[];
+  source_by_field?: Record<string, string>;
 }
 
 export interface Breakdown {

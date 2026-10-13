@@ -27,7 +27,7 @@ RECALL_ATTRIBUTION = "Recall data from openFDA (FDA)"
 USDA_ATTRIBUTION = "Nutrition data from USDA FoodData Central"
 CACHE_CONTROL = "public, max-age=300"
 
-Session = Annotated[AsyncSession, Depends(get_session)]
+Session = Annotated[AsyncSession, Depends(get_session)]  # shared with other routers
 
 
 def get_off(request: Request) -> OFFClient:
@@ -79,7 +79,7 @@ def _cached(request: Request, response: Response, etag: str) -> Response | None:
     return None
 
 
-def _product_body(result: LookupResult) -> dict[str, Any]:
+def product_body(result: LookupResult) -> dict[str, Any]:
     p = result.product
     score = {k: v for k, v in result.score.items() if k != "breakdown"}
     return {
@@ -145,7 +145,7 @@ async def get_product(
     result = await _resolve(gtin, session, off, cfg, settings, now, usda)
     if (not_modified := _cached(request, response, _etag(result, cfg))) is not None:
         return not_modified
-    body = _product_body(result)  # LOOKUP-10
+    body = product_body(result)  # LOOKUP-10
     body["additives"] = await product_additives(session, result.product.gtin)  # FDA-5
     return body
 
