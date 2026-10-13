@@ -61,3 +61,4 @@ and noting why; its tests go with it.
 | [020-scheduled-jobs](020-scheduled-jobs.md) | Daily recall sync and weekly data refresh (GitHub Actions) | implemented |
 | [021-deploy](021-deploy.md) | Deployment: Docker API, Render, Vercel, Supabase | implemented |
 | [022-voice](022-voice.md) | Ask about a product by voice or text; read aloud | implemented |
+| [023-assistant](023-assistant.md) | Voice assistant tab: ask about any product, by condition | implemented |

@@ -136,3 +136,23 @@ test("[METH-8] methodology and about pages are accessible and show the API's num
     expect(results.violations, `${path}: ${results.violations.map((v) => v.id)}`).toEqual([]);
   }
 });
+
+test("[ASSIST-9] [ASSIST-11] the assistant answers a typed health question and is accessible", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("link", { name: /Ask the assistant/ }).click();
+  await expect(page).toHaveURL("/assistant");
+  await page.getByLabel("Your question").fill("I'm diabetic, can I eat crunchy oat bars?");
+  await page.getByRole("button", { name: "Ask", exact: true }).click();
+  const conversation = page.getByRole("list", { name: "Conversation" });
+  await expect(conversation).toContainText("Crunchy Oat Bars");
+  await expect(conversation).toContainText("For blood sugar: Sugars: 12 g per 100 g, which is medium");
+  await expect(conversation).toContainText("not medical advice");
+  await expect(conversation.getByRole("link", { name: "See the product" })).toHaveAttribute(
+    "href",
+    "/p/0036000291452",
+  );
+  const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+  expect(results.violations, results.violations.map((v) => v.id).join(",")).toEqual([]);
+});

@@ -1,0 +1,272 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
+
+import {
+  type AssistantProduct,
+  NEED_PRODUCT,
+  NOT_AVAILABLE,
+  answerFor,
+  notFound,
+  parseQuestion,
+} from "@/lib/assistant";
+import { type SearchOutcome, searchProducts } from "@/lib/search";
+
+const CONSENT_KEY = "ofs.voice-consent"; // shared with the product page's voice panel (VOICE-7)
+
+interface Message {
+  id: number;
+  role: "you" | "assistant";
+  text: string;
+  gtin?: string;
+}
+
+interface Recognition {
+  lang: string;
+  interimResults: boolean;
+  onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
+  onerror: (() => void) | null;
+  onend: (() => void) | null;
+  start(): void;
+  stop(): void;
+}
+type RecognitionCtor = new () => Recognition;
+
+function recognitionCtor(): RecognitionCtor | null {
+  if (typeof window === "undefined") return null;
+  const w = window as unknown as { SpeechRecognition?: RecognitionCtor; webkitSpeechRecognition?: RecognitionCtor };
+  return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
+}
+function supportSnapshot(): string {
+  return [typeof window !== "undefined" && "speechSynthesis" in window ? "speech" : "", recognitionCtor() ? "mic" : ""].join(",");
+}
+const noSubscribe = () => () => {};
+
+async function fetchProductJson(gtin: string): Promise<AssistantProduct | null> {
+  try {
+    const res = await fetch(`/api/products/${encodeURIComponent(gtin)}`);
+    return res.ok ? ((await res.json()) as AssistantProduct) : null;
+  } catch {
+    return null;
+  }
+}
+
+// The voice assistant tab (spec 023).
+export function Assistant({
+  search = searchProducts,
+  fetchProduct = fetchProductJson,
+}: {
+  search?: (q: string) => Promise<SearchOutcome>;
+  fetchProduct?: (gtin: string) => Promise<AssistantProduct | null>;
+}) {
+  const inputId = useId();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [question, setQuestion] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [listening, setListening] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
+  const [askConsent, setAskConsent] = useState(false);
+  const lastGtin = useRef<string | null>(null);
+  const recognition = useRef<Recognition | null>(null);
+  const nextId = useRef(0);
+  const supported = useSyncExternalStore(noSubscribe, supportSnapshot, () => ",");
+  const support = { speech: supported.startsWith("speech"), mic: supported.endsWith("mic") };
+
+  useEffect(
+    () => () => {
+      try {
+        window.speechSynthesis?.cancel();
+      } catch {}
+    },
+    [],
+  );
+
+  function say(message: Omit<Message, "id">) {
+    setMessages((m) => [...m, { ...message, id: nextId.current++ }]);
+  }
+
+  function speak(text: string) {
+    if (!support.speech) return;
+    try {
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "en-US";
+      u.onend = () => setSpeaking(false);
+      u.onerror = () => setSpeaking(false);
+      setSpeaking(true);
+      window.speechSynthesis.speak(u);
+    } catch {
+      setSpeaking(false);
+    }
+  }
+
+  async function ask(raw: string) {
+    const q = raw.trim();
+    if (!q || busy) return;
+    say({ role: "you", text: q });
+    setQuestion("");
+    setBusy(true);
+    try {
+      const parsed = parseQuestion(q);
+      let gtin: string | null = null;
+      if (parsed.productQuery) {
+        const outcome = await search(parsed.productQuery); // ASSIST-4
+        if (outcome.kind === "error") return reply(NOT_AVAILABLE);
+        gtin = outcome.gtin ?? outcome.results[0]?.gtin ?? null;
+        if (!gtin) return reply(notFound(parsed.productQuery)); // ASSIST-8
+      } else {
+        gtin = lastGtin.current; // ASSIST-2: follow-up about the last product
+        if (!gtin) return reply(NEED_PRODUCT);
+      }
+      const product = await fetchProduct(gtin);
+      if (!product) return reply(NOT_AVAILABLE);
+      lastGtin.current = product.gtin;
+      reply(answerFor(product, parsed), product.gtin);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function reply(text: string, gtin?: string) {
+    say({ role: "assistant", text, gtin });
+    speak(text);
+  }
+
+  function listen() {
+    const Ctor = recognitionCtor();
+    if (!Ctor) return;
+    let consented = false;
+    try {
+      consented = localStorage.getItem(CONSENT_KEY) === "yes";
+    } catch {}
+    if (!consented) return setAskConsent(true); // ASSIST-10, VOICE-7
+    try {
+      const r = new Ctor();
+      r.lang = "en-US";
+      r.interimResults = false;
+      r.onresult = (e) => {
+        const heard = e.results[0]?.[0]?.transcript ?? "";
+        void ask(heard);
+      };
+      r.onerror = () => setListening(false);
+      r.onend = () => setListening(false);
+      recognition.current = r;
+      setListening(true);
+      r.start();
+    } catch {
+      setListening(false);
+    }
+  }
+
+  function consent() {
+    try {
+      localStorage.setItem(CONSENT_KEY, "yes");
+    } catch {}
+    setAskConsent(false);
+    listen();
+  }
+
+  return (
+    <div className="flex flex-col gap-5">
+      <div className="flex flex-col items-center gap-3 py-4">
+        {support.mic ? (
+          <button
+            type="button"
+            onClick={listening ? () => recognition.current?.stop() : listen}
+            aria-pressed={listening}
+            aria-label={listening ? "Stop listening" : "Ask by voice"}
+            className="relative flex h-28 w-28 items-center justify-center rounded-full bg-emerald-700 text-5xl text-white shadow-lg transition hover:bg-emerald-800 focus-visible:outline focus-visible:outline-4 focus-visible:outline-emerald-300"
+          >
+            {listening && (
+              <span aria-hidden="true" className="absolute inset-0 animate-ping rounded-full bg-emerald-500 opacity-60" />
+            )}
+            <span aria-hidden="true" className="relative">
+              🎤
+            </span>
+          </button>
+        ) : (
+          <p className="text-sm text-zinc-600">Voice isn&apos;t available in this browser. Type your question below.</p>
+        )}
+        <p className="text-sm text-zinc-600" aria-live="polite">
+          {listening ? "Listening…" : busy ? "Looking it up…" : support.mic ? "Tap and ask" : ""}
+        </p>
+        {speaking && (
+          <button
+            type="button"
+            onClick={() => {
+              window.speechSynthesis.cancel();
+              setSpeaking(false);
+            }}
+            className="rounded-lg px-3 py-1 text-sm ring-1 ring-zinc-300"
+          >
+            Stop speaking
+          </button>
+        )}
+      </div>
+
+      {askConsent && (
+        <div role="alertdialog" aria-labelledby="assistant-mic-notice" className="rounded-lg bg-white p-3 text-sm ring-1 ring-zinc-300">
+          <p id="assistant-mic-notice">
+            Voice questions use your browser&apos;s speech service. In Chrome, your voice is sent to Google to turn it into
+            text. You can type instead.
+          </p>
+          <div className="mt-2 flex gap-3">
+            <button type="button" onClick={consent} className="font-medium underline">
+              Continue
+            </button>
+            <button type="button" onClick={() => setAskConsent(false)} className="underline">
+              Not now
+            </button>
+          </div>
+        </div>
+      )}
+
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          void ask(question);
+        }}
+        className="flex gap-2"
+      >
+        <label htmlFor={inputId} className="sr-only">
+          Your question
+        </label>
+        <input
+          id={inputId}
+          value={question}
+          onChange={(e) => setQuestion(e.target.value)}
+          placeholder="e.g. I have high blood pressure, is Pringles ok?"
+          className="min-w-0 flex-1 rounded-lg border border-zinc-400 bg-white px-3 py-2 text-base"
+        />
+        <button type="submit" disabled={busy} className="rounded-lg bg-zinc-900 px-4 py-2 font-medium text-white disabled:opacity-50">
+          Ask
+        </button>
+      </form>
+
+      <ol aria-label="Conversation" aria-live="polite" className="flex flex-col gap-3">
+        {messages.map((m) => (
+          <li
+            key={m.id}
+            className={
+              m.role === "you"
+                ? "self-end rounded-2xl rounded-br-sm bg-zinc-900 px-4 py-2 text-white"
+                : "self-start rounded-2xl rounded-bl-sm bg-zinc-100 px-4 py-2 text-zinc-900"
+            }
+          >
+            <span className="sr-only">{m.role === "you" ? "You: " : "Assistant: "}</span>
+            {m.text}
+            {m.gtin && (
+              <>
+                {" "}
+                <Link href={`/p/${m.gtin}`} className="whitespace-nowrap font-medium underline">
+                  See the product
+                </Link>
+              </>
+            )}
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
