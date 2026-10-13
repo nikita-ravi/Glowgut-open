@@ -152,3 +152,21 @@ export function loadAlternatives(gtin: string, fetcher: typeof fetch = fetch) {
 export function loadRecalls(gtin: string, fetcher: typeof fetch = fetch) {
   return optionalJson<Recalls>(`/products/${encodeURIComponent(gtin)}/recalls`, fetcher);
 }
+
+export interface Methodology {
+  engine_version: string;
+  weights: Record<Component, number>;
+  bands: { id: string; label: string; min: number }[];
+  nova_values: Record<string, number>;
+  additives: {
+    risk_penalty: Record<string, number>;
+    evidence_weight: Record<string, number>;
+    cap_total: number;
+  };
+  sources: Record<"nutriscore_foods" | "nutriscore_beverages" | "efsa" | "nova", string>;
+  changelog: { version: string; change: string }[];
+}
+
+export function loadMethodology(fetcher: typeof fetch = fetch) {
+  return optionalJson<Methodology>("/methodology", fetcher);
+}

@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 
-import { ProductFooter, ProductMessage, ProductView } from "@/components/ProductView";
+import { ProductMessage, ProductView } from "@/components/ProductView";
 import { loadAlternatives, loadProduct, loadRecalls } from "@/lib/api";
 
 export const metadata = { title: "Product" };
@@ -14,7 +14,6 @@ export default function ProductPage({ params }: PageProps<"/p/[gtin]">) {
           <ProductContent gtin={gtin} />
         ))}
       </Suspense>
-      <ProductFooter />
     </>
   );
 }

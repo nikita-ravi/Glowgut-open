@@ -111,6 +111,11 @@ class RecallsConfig(_Frozen):
     stop_words: list[str]
 
 
+class ChangelogEntry(_Frozen):
+    version: str
+    change: str
+
+
 class ScoringConfig(_Frozen):
     engine_version: str
     weights: dict[str, int]
@@ -121,6 +126,7 @@ class ScoringConfig(_Frozen):
     estimates: EstimatesConfig
     alternatives: AlternativesConfig
     recalls: RecallsConfig
+    changelog: list[ChangelogEntry]
 
 
 def load_config(path: Path = CONFIG_PATH) -> ScoringConfig:

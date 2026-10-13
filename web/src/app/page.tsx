@@ -10,9 +10,6 @@ export default function Home() {
         </p>
       </header>
       <ScanHome />
-      <p className="text-sm text-zinc-600">
-        Data from Open Food Facts (ODbL). Educational information, not medical advice.
-      </p>
     </div>
   );
 }
