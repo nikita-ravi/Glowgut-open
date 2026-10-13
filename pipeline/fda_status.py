@@ -31,6 +31,13 @@ _NON_ALNUM = re.compile(r"[^a-z0-9]+")
 _E_PREFIX = re.compile(r"^e\s?\d+[a-z]*(\([ivx]+\))?\s*[-:]\s*", re.IGNORECASE)
 
 
+class FDAUnavailable(Exception):
+    """FDA's export couldn't be fetched, or wasn't the inventory (FDA-7)."""
+
+
+HEADER = "CAS Reg No"
+
+
 @dataclass(frozen=True)
 class UsStatus:
     status: str
@@ -38,10 +45,16 @@ class UsStatus:
 
 
 def download(user_agent: str, dest: Path = CACHE) -> Path:  # FDA-1
+    """Fetch the export and cache it, only if it really is the inventory (FDA-7)."""
+    try:
+        resp = httpx.get(EXPORT_URL, headers={"User-Agent": user_agent}, timeout=60,
+                         follow_redirects=True)  # fmt: skip
+        resp.raise_for_status()
+    except httpx.HTTPError as exc:
+        raise FDAUnavailable(f"download failed: {exc.__class__.__name__}") from exc
+    if HEADER.encode() not in resp.content:
+        raise FDAUnavailable("the response isn't the Substances Added to Food export")
     dest.parent.mkdir(parents=True, exist_ok=True)
-    resp = httpx.get(EXPORT_URL, headers={"User-Agent": user_agent}, timeout=60,
-                     follow_redirects=True)  # fmt: skip
-    resp.raise_for_status()
     dest.write_bytes(resp.content)
     return dest
 
@@ -75,7 +88,9 @@ def status_of(substance: str, sections: list[str], fema: str) -> UsStatus | None
 
 def parse(text: str) -> dict[str, UsStatus]:
     """Normalized substance name and other names -> status (FDA-2, FDA-3)."""
-    rows = csv.reader(io.StringIO(text[text.index("CAS Reg No") :]))
+    if HEADER not in text:
+        raise FDAUnavailable("the cached file isn't the Substances Added to Food export")
+    rows = csv.reader(io.StringIO(text[text.index(HEADER) :]))
     header = next(rows)
     reg_cols = [
         i for i, h in enumerate(header) if h.startswith("Reg ") and h != "Reg Administrative"

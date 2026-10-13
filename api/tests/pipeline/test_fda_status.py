@@ -88,3 +88,32 @@ def test_download_saves_the_export_with_our_user_agent(tmp_path: Path) -> None:
     assert path.read_text() == EXPORT
     request: httpx.Request = route.calls.last.request
     assert request.headers["user-agent"] == "OpenFoodScanner/0.1 (t@example.com)"
+
+
+@spec("FDA-7")
+def test_a_non_inventory_response_is_rejected_and_not_cached(tmp_path: Path) -> None:
+    from pipeline.fda_status import FDAUnavailable
+
+    cache = tmp_path / "fda.csv"
+    with respx.mock as mock:
+        mock.get(EXPORT_URL).respond(200, text="<html>Access denied</html>")
+        with pytest.raises(FDAUnavailable):
+            download("UA", cache)
+        mock.get(EXPORT_URL).respond(503)
+        with pytest.raises(FDAUnavailable):
+            download("UA", cache)
+    assert not cache.exists()
+    with pytest.raises(FDAUnavailable):
+        parse("<html>not the export</html>")
+
+
+@spec("FDA-7")
+def test_the_reference_load_carries_on_without_fda(tmp_path: Path) -> None:
+    from pipeline.reference import us_status_index
+
+    with respx.mock as mock:
+        mock.get(EXPORT_URL).respond(200, text="<html>blocked</html>")
+        assert us_status_index(True, "UA", tmp_path / "fda.csv") is None
+        mock.get(EXPORT_URL).respond(200, text=EXPORT)
+        index = us_status_index(True, "UA", tmp_path / "fda.csv")
+    assert index is not None and index["sodium nitrite"].status == "food_additive"
