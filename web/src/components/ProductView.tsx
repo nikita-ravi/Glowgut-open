@@ -14,6 +14,7 @@ import {
 import { AlternativesStrip } from "./AlternativesStrip";
 import { ProductAccount } from "./ProductAccount";
 import { RecallBanner } from "./RecallBanner";
+import { VoicePanel } from "./VoicePanel";
 
 const BADGE_STYLES = {
   complete: "bg-emerald-50 text-emerald-900",
@@ -185,6 +186,8 @@ export function ProductView({
       </section>
 
       <AlternativesStrip data={alternatives} />
+
+      <VoicePanel data={{ product, breakdown, alternatives }} />
 
       <ComponentBars product={product} />
 

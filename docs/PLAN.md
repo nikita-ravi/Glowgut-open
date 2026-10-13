@@ -80,7 +80,7 @@ Every task follows the spec-driven workflow in `specs/README.md`: spec first, th
 
 ## M6: Voice + launch polish (weeks 9–10)
 
-- [ ] Voice: Web Speech STT → intent router (product, score, alternatives, allergen check) → `kokoro-js` TTS; "read this product aloud"
+- [x] Voice: Web Speech STT → intent router (score, why, additives, allergens, alternatives) → browser `speechSynthesis`; "read this product aloud" *(spec 022; kokoro-js dropped: 86 MB model and a GPL-3.0 eSpeak NG phonemizer)*
 - [x] Methodology page, `engine_version` changelog, About/attribution page, privacy page *(specs 018, 019)*
 - [x] Deploy configs: web → Vercel; API → Render free (Dockerfile); DB → Supabase; weekly pipeline cron in GitHub Actions *(specs 020, 021; `docs/DEPLOY.md`. Going live needs the accounts)*
 - [x] License check in CI (`pip-licenses`, `pnpm licenses`): fail on GPL/AGPL
