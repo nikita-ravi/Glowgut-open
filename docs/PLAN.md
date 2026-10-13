@@ -64,8 +64,8 @@ Every task follows the spec-driven workflow in `specs/README.md`: spec first, th
 ## M4: Search + contributions (week 7)
 
 - [x] `GET /search?q=`: trigram + tsvector ranking, debounced client autocomplete *(spec 016; p95 still to measure on the loaded DB)*
-- [ ] Label-photo flow: capture → compress → Robotoff extraction (fallback Tesseract.js) → user confirms every field → `POST /contributions` → score
-- [ ] Opt-in push of confirmed data + photos back to OFF via the Python SDK
+- [x] Label-photo flow: capture → compress → Tesseract.js in the browser → user confirms every field → `POST /contributions` → score *(spec 017; Robotoff only works on photos already on OFF)*
+- [x] Opt-in push of confirmed data back to OFF *(spec 017; needs OFF_USER/OFF_PASSWORD; photos not uploaded in v1)*
 
 **Done when:** p95 search latency is ≤ 150 ms on the loaded subset, and a missing product can be added and scored end to end.
 

@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Third-party assets copied at install (scripts/copy-*.mjs), not our code.
+    "public/tesseract/**",
+    "public/zxing/**",
   ]),
 ]);
 

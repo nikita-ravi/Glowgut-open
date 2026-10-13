@@ -3,10 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "postinstall": "node scripts/copy-zxing-wasm.mjs",
-    "predev": "node scripts/copy-zxing-wasm.mjs",
+    "postinstall": "node scripts/copy-zxing-wasm.mjs && node scripts/copy-ocr-assets.mjs",
+    "predev": "node scripts/copy-zxing-wasm.mjs && node scripts/copy-ocr-assets.mjs",
     "dev": "next dev",
-    "prebuild": "node scripts/copy-zxing-wasm.mjs",
+    "prebuild": "node scripts/copy-zxing-wasm.mjs && node scripts/copy-ocr-assets.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -15,10 +15,12 @@
     "e2e": "playwright test"
   },
   "dependencies": {
+    "@tesseract.js-data/eng": "1.0.0",
     "barcode-detector": "^3.2.2",
     "next": "16.4.0",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "tesseract.js": "7.0.0"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",

@@ -5,6 +5,7 @@ from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import (
+    BigInteger,
     Boolean,
     Date,
     DateTime,
@@ -107,3 +108,16 @@ class RecallSync(Base):
     __tablename__ = "recall_sync"
     source: Mapped[str] = mapped_column(Text, primary_key=True)
     as_of: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class Contribution(Base):
+    """A product added from a label photo (specs/017). Never stores the photo."""
+
+    __tablename__ = "contributions"
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    gtin: Mapped[str] = mapped_column(Text, index=True)
+    user_id: Mapped[str | None] = mapped_column(Text)
+    extracted: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    status: Mapped[str] = mapped_column(Text)
+    shared_with_off: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

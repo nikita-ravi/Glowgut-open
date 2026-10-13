@@ -35,7 +35,7 @@ def is_fresh(product: Product, now: datetime, cache_days: int) -> bool:
     return now - product.fetched_at < timedelta(days=cache_days)
 
 
-async def _upsert(
+async def upsert_product(
     session: AsyncSession, row: dict[str, Any], codes: list[str] | None, engine_version: str
 ) -> None:
     stmt = insert(Product).values(**row)
@@ -144,7 +144,9 @@ def score_row(gtin: str, result: ScoreResult, *, with_breakdown: bool) -> dict[s
     }
 
 
-async def _score(session: AsyncSession, product: Product, cfg: ScoringConfig) -> dict[str, Any]:
+async def score_product(
+    session: AsyncSession, product: Product, cfg: ScoringConfig
+) -> dict[str, Any]:
     """Return the stored score for this engine version, computing it once if absent (LOOKUP-9)."""
     existing = await session.get(Score, (product.gtin, cfg.engine_version))
     if existing is not None and "breakdown" in existing.breakdown:
@@ -175,14 +177,16 @@ async def lookup(
     """Raise ProductNotFound or SourceUnavailable; otherwise return product + score."""
     cached = await session.get(Product, gtin)
     if cached is not None and is_fresh(cached, now, cache_days):  # LOOKUP-2
-        return LookupResult(cached, await _score(session, cached, cfg), stale=False)
+        return LookupResult(cached, await score_product(session, cached, cfg), stale=False)
 
     try:
         raw = await off.fetch(lookup_forms(gtin))  # LOOKUP-3
     except SourceUnavailable:
         if cached is None:
             raise
-        return LookupResult(cached, await _score(session, cached, cfg), stale=True)  # LOOKUP-8
+        return LookupResult(
+            cached, await score_product(session, cached, cfg), stale=True
+        )  # LOOKUP-8
 
     if raw is not None:
         row, codes = map_product(gtin, raw, now), additive_codes(raw)
@@ -193,8 +197,8 @@ async def lookup(
         row = map_usda_product(gtin, food, now)  # USDA-8
         codes = await _derive_additives(session, row)  # EST-5
 
-    await _upsert(session, row, codes, cfg.engine_version)  # LOOKUP-6
+    await upsert_product(session, row, codes, cfg.engine_version)  # LOOKUP-6
     await session.commit()
     product = await session.get(Product, gtin, populate_existing=True)
     assert product is not None
-    return LookupResult(product, await _score(session, product, cfg), stale=False)
+    return LookupResult(product, await score_product(session, product, cfg), stale=False)

@@ -41,7 +41,8 @@ async function ProductContent({ gtin }: { gtin: string }) {
       return (
         <ProductMessage
           title="We couldn't find this product"
-          body={`Barcode ${result.gtin} isn't in Open Food Facts yet. Adding products from a label photo is coming soon.`}
+          body={`Barcode ${result.gtin} isn't in Open Food Facts or USDA yet.`}
+          action={{ href: `/add/${result.gtin}`, label: "Add it from a label photo" }}
         />
       );
     case "invalid":

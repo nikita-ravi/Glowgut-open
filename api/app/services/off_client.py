@@ -62,3 +62,22 @@ class OFFClient:
                 product: dict[str, Any] = body["product"]
                 return product
         return None
+
+
+WRITE_PATH = "/cgi/product_jqm2.pl"
+
+
+async def share_product(
+    http: httpx.AsyncClient, base_url: str, user_agent: str, user: str, password: str,
+    fields: dict[str, str],
+) -> str:  # fmt: skip
+    """Add a product to Open Food Facts (CONTRIB-10). Returns "ok" or a short error."""
+    data = {"user_id": user, "password": password, **fields}
+    try:
+        resp = await http.post(f"{base_url.rstrip('/')}{WRITE_PATH}", data=data,
+                               headers={"User-Agent": user_agent}, timeout=10)  # fmt: skip
+        resp.raise_for_status()
+        body = resp.json()
+    except (httpx.HTTPError, ValueError) as exc:
+        return f"error: {exc.__class__.__name__}"
+    return "ok" if body.get("status") == 1 else f"error: {body.get('status_verbose', 'rejected')}"

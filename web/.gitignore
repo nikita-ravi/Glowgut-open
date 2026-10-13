@@ -40,6 +40,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# generated at install (scripts/copy-zxing-wasm.mjs)
+# generated at install (scripts/copy-zxing-wasm.mjs, scripts/copy-ocr-assets.mjs)
 /public/zxing/
+/public/tesseract/
 /coverage

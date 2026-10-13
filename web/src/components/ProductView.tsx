@@ -116,6 +116,12 @@ export function ProductView({
         </p>
       )}
 
+      {Object.values(product.source_by_field ?? {}).includes("contribution") && (
+        <p className="rounded-lg bg-sky-50 p-3 text-sm text-sky-900">
+          Added by a user from a label photo. Not yet checked.
+        </p>
+      )}
+
       <header className="flex gap-4">
         {product.image_url && (
           // Product photos come from Open Food Facts; next/image would need a remote allowlist.
@@ -245,11 +251,27 @@ export function ProductView({
   );
 }
 
-export function ProductMessage({ title, body }: { title: string; body: string }) {
+export function ProductMessage({
+  title,
+  body,
+  action,
+}: {
+  title: string;
+  body: string;
+  action?: { href: string; label: string };
+}) {
   return (
     <div className="flex flex-col gap-3">
       <h1 className="text-2xl font-bold">{title}</h1>
       <p>{body}</p>
+      {action && (
+        <Link
+          href={action.href}
+          className="self-start rounded-lg bg-zinc-900 px-4 py-2 font-medium text-white"
+        >
+          {action.label}
+        </Link>
+      )}
       <Link href="/" className="self-start underline">
         Scan or type another barcode
       </Link>
