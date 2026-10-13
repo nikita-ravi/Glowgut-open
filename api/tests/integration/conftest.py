@@ -17,12 +17,14 @@ from app.db.session import get_session, make_engine, make_sessionmaker
 from app.main import app
 from app.routers.products import get_now
 from app.services.off_client import OFFClient
+from app.services.usda_client import USDAClient
 
 ROOT = Path(__file__).resolve().parents[3]
 TEST_DB_URL = os.environ.get(
     "TEST_DATABASE_URL", "postgresql+asyncpg://ofs:ofs@localhost:5432/ofs_test"
 )
 OFF_BASE = "https://off.test"
+USDA_BASE = "https://usda.test"
 NOW = datetime(2026, 10, 12, 12, 0, tzinfo=UTC)
 USER_AGENT = "OpenFoodScanner/0.1 (tests@example.com)"
 
@@ -73,8 +75,18 @@ def off_mock() -> Iterator[respx.MockRouter]:
 
 
 @pytest.fixture
+def usda_mock() -> Iterator[respx.MockRouter]:
+    """USDA has nothing unless a test says otherwise."""
+    with respx.mock(base_url=USDA_BASE, assert_all_called=False) as mock:
+        mock.get("/fdc/v1/foods/search", name="search").respond(200, json={"foods": []})
+        yield mock
+
+
+@pytest.fixture
 async def client(
-    sessionmaker: async_sessionmaker[AsyncSession], off_mock: respx.MockRouter
+    sessionmaker: async_sessionmaker[AsyncSession],
+    off_mock: respx.MockRouter,
+    usda_mock: respx.MockRouter,
 ) -> AsyncIterator[httpx.AsyncClient]:
     async def _session() -> AsyncIterator[AsyncSession]:
         async with sessionmaker() as s:
@@ -84,6 +96,7 @@ async def client(
     app.dependency_overrides[get_now] = lambda: NOW
     async with httpx.AsyncClient() as off_http:
         app.state.off = OFFClient(off_http, OFF_BASE, USER_AGENT)
+        app.state.usda = USDAClient(off_http, USDA_BASE, "TEST_KEY", USER_AGENT)
         transport = httpx.ASGITransport(app=app)
         async with httpx.AsyncClient(transport=transport, base_url="http://api") as c:
             yield c

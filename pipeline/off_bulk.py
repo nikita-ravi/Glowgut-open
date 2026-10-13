@@ -23,7 +23,9 @@ import polars as pl
 
 from app.services.gtin import InvalidGTIN, normalize
 from app.services.off_mapping import additive_codes, map_product
+from app.services.usda_mapping import UsdaFood, fill_gaps
 from app.settings import get_settings
+from pipeline import usda_bulk
 from pipeline.load import Item, load_products
 
 EXPORT_URL = "https://static.openfoodfacts.org/data/en.openfoodfacts.org.products.csv.gz"
@@ -125,12 +127,20 @@ def to_api_product(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def mapped_rows(path: Path, now: datetime, max_products: int = MAX_PRODUCTS) -> list[Item]:
+def mapped_rows(
+    path: Path,
+    now: datetime,
+    max_products: int = MAX_PRODUCTS,
+    usda: dict[str, UsdaFood] | None = None,
+    stats: dict[str, int] | None = None,
+) -> list[Item]:
     """Load items for valid, named, scorable products (OFF-5).
 
-    A duplicate code keeps its latest edit. Above `max_products`, the most scanned are
-    kept (OFF-10); the rest are still found by live lookup when scanned.
+    USDA fills missing nutrients first (USDA-5, USDA-6). A duplicate code keeps its latest
+    edit. Above `max_products`, the most scanned are kept (OFF-10); the rest are still
+    found by live lookup when scanned.
     """
+    stats = stats if stats is not None else {}
     df = pl.read_parquet(path).sort("last_modified_t", nulls_last=False)
     seen: dict[str, tuple[int, Item]] = {}
     for row in df.iter_rows(named=True):
@@ -142,6 +152,9 @@ def mapped_rows(path: Path, now: datetime, max_products: int = MAX_PRODUCTS) -> 
         if not product["product_name"]:
             continue
         mapped = map_product(gtin, product, now)
+        if usda and gtin in usda and (n := fill_gaps(mapped, usda[gtin])):
+            stats["usda_fields"] = stats.get("usda_fields", 0) + n
+            stats["usda_products"] = stats.get("usda_products", 0) + 1
         if not all(k in mapped["nutrition"] for k in REQUIRED):
             continue
         modified = row["last_modified_t"]
@@ -164,9 +177,36 @@ def main() -> None:
     if args.refresh or not EXTRACT.exists() or EXTRACT.stat().st_mtime < EXPORT.stat().st_mtime:
         extract()
         print(f"off: US extract written to {EXTRACT} ({time.monotonic() - started:.0f}s)")
+    usda = usda_fill()
     now = datetime.now(UTC)
-    rows = mapped_rows(EXTRACT, now, args.max_products)
+    stats: dict[str, int] = {}
+    rows = mapped_rows(EXTRACT, now, args.max_products, usda, stats)
+    if usda:
+        print(f"usda: filled {stats.get('usda_fields', 0)} fields in "
+              f"{stats.get('usda_products', 0)} products")  # fmt: skip
     print(asyncio.run(load_products(settings.database_url, rows, now)))
+
+
+def usda_fill() -> dict[str, UsdaFood] | None:
+    """USDA gap-fill data if the Branded Foods zip is present (USDA-4), else None."""
+    zip_path, cache = usda_bulk.ZIP, usda_bulk.FILL_CACHE
+    if not zip_path.exists():
+        print(
+            f"usda: no {zip_path}; skipping the gap-fill (download from {usda_bulk.DOWNLOAD_PAGE})"
+        )
+        return None
+    if cache.exists() and cache.stat().st_mtime >= max(zip_path.stat().st_mtime,
+                                                        EXTRACT.stat().st_mtime):  # fmt: skip
+        return usda_bulk.load_fill(cache)
+    wanted = set()
+    for code in pl.read_parquet(EXTRACT, columns=["code"])["code"]:
+        try:
+            wanted.add(normalize(code or ""))
+        except InvalidGTIN:
+            continue
+    fill = usda_bulk.read_fill(zip_path, wanted)
+    usda_bulk.save_fill(fill, cache)
+    return fill
 
 
 if __name__ == "__main__":

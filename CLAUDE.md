@@ -42,7 +42,7 @@ Feature behaviour is defined in `specs/NNN-*.md` as numbered requirements (`**GT
 ## Repo layout
 
 ```
-pipeline/        offline data: reference.py (additives), recalls.py (openFDA), off_bulk.py + load.py (bulk OFF import)
+pipeline/        offline data: reference.py (additives), recalls.py (openFDA), off_bulk.py + load.py (bulk OFF import), usda_bulk.py (USDA gap-fill)
 specs/           feature specs with requirement IDs (the source of truth for behaviour)
 api/app/         FastAPI app: main.py, routers/, services/ (gtin, off_client, off_mapping, lookup, alternatives, recalls), db/
 api/app/scoring/ engine.py, nutriscore_2023.py, additives.py, processing.py, explain.py, config.py
@@ -64,6 +64,7 @@ uv run alembic upgrade head                   # migrations
 uv run python -m pipeline.reference           # load the additives table from the OFF taxonomy
 uv run python -m pipeline.recalls             # sync openFDA recalls (last 3 years, ~6 MB download)
 uv run python -m pipeline.off_bulk            # bulk-load US products from the OFF export (~1.3 GB download, cached in data/off/)
+                                              # with data/usda/branded.zip present (FDC Branded Foods CSV), USDA fills nutrient gaps
 uv run pytest                                 # unit + integration + spec traceability
 uv run pytest --cov                           # same, with coverage (fails under 85%)
 uv run ruff check . && uv run ruff format --check . && uv run mypy api pipeline   # lint and types
@@ -99,5 +100,7 @@ Update this section as soon as a command changes.
 - The hosted DB budget is 450 MB, about 100,000 products with scores. Bulk scores are stored without breakdown lines; the lookup fills them in on first view.
 - In OFF, US products may be stored with 12- or 13-digit codes. Look up both forms.
 - USDA Branded Foods has no NOVA group, no Nutri-Score, and no parsed additives. Derive them from its ingredient text and nutrient rows.
+- USDA stores barcodes as 14-digit GTINs: search FoodData Central with `gtin.zfill(14)`; the 12- or 13-digit form finds nothing. `DEMO_KEY` allows ~10 requests an hour; set `USDA_API_KEY` (free at api.data.gov) for real use.
+- USDA spells categories inconsistently (`A  B`, `A - B`, `A – B`). `usda_mapping.category_key` normalizes them; key `config/usda_categories.yaml` the same way.
 - The Supabase free tier pauses after 7 idle days. The weekly GitHub Actions job keeps it active.
 - Nutri-Score has separate rules for general foods, beverages, cheese, and fats/oils/nuts/seeds. Always pass the category.

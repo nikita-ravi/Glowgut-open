@@ -96,10 +96,12 @@ def map_product(gtin: str, p: dict[str, Any], fetched_at: datetime) -> dict[str,
     }
     present = [k for k, v in row.items() if v not in (None, [], {}) and k != "fetched_at"]
     row["source_by_field"] = {k: "off" for k in present if k != "gtin"}
-    inputs_present = (
-        sum(1 for k in SCORING_INPUTS if k in nutrition) + (nova is not None) + (codes is not None)
-    )
-    row["completeness"] = Decimal(inputs_present / (len(SCORING_INPUTS) + 2)).quantize(
-        Decimal("0.01")
-    )
+    row["completeness"] = completeness(nutrition, nova, codes is not None)
     return row
+
+
+def completeness(nutrition: dict[str, Any], nova: int | None, additives_known: bool) -> Decimal:
+    """Share of scoring inputs present: the nutrients, NOVA and the additive list."""
+    present = sum(1 for k in SCORING_INPUTS if k in nutrition) + (nova is not None)
+    present += additives_known
+    return Decimal(present / (len(SCORING_INPUTS) + 2)).quantize(Decimal("0.01"))
