@@ -30,7 +30,9 @@ def export_row(code: str, **overrides: str) -> dict[str, str]:
         "image_url": f"https://images.openfoodfacts.org/images/products/{code}/front_en.12.400.jpg",
         "categories_tags": "en:snacks,en:cereal-bars", "additives_tags": "en:e330",
         "nova_group": "4", "last_modified_t": "1760000000", "unique_scans_n": "100",
-        "nutriscore_score": "11", "nutriscore_grade": "d", **SNACK,
+        "nutriscore_score": "11", "nutriscore_grade": "d", "allergens": "en:gluten,en:milk",
+        "traces_tags": "en:nuts", "ingredients_analysis_tags": "en:non-vegan,en:vegetarian",
+        **SNACK,
     })  # fmt: skip
     row.update(overrides)
     return row

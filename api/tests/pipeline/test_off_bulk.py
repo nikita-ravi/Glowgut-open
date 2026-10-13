@@ -92,3 +92,23 @@ def test_only_the_most_scanned_are_kept_above_the_cap(tmp_path: Path) -> None:
             [("0000000000017", "5"), ("0000000000024", "50"), ("0000000000031", "20")]]  # fmt: skip
     items = mapped_rows(write_extract(tmp_path, rows), NOW, max_products=2)
     assert [r["gtin"] for r, _, _ in items] == ["0000000000024", "0000000000031"]
+
+
+@spec("ACC-6")
+def test_allergens_traces_and_diet_analysis_are_imported(tmp_path: Path) -> None:
+    [(row, _, _)] = mapped_rows(write_extract(tmp_path, [export_row(GTIN)]), NOW)
+    assert row["allergens"] == ["en:gluten", "en:milk"]
+    assert row["traces"] == ["en:nuts"]
+    assert row["ingredients_analysis"] == ["en:non-vegan", "en:vegetarian"]
+
+
+@spec("ACC-6")
+def test_an_extract_without_the_allergen_columns_is_rebuilt(tmp_path: Path) -> None:
+    from pipeline.off_bulk import extract_outdated
+
+    current = write_extract(tmp_path, [export_row(GTIN)])
+    assert not extract_outdated(current, tmp_path / "missing.csv.gz")
+    old = tmp_path / "old.parquet"
+    pl.read_parquet(current).drop("allergens").write_parquet(old)
+    assert extract_outdated(old, tmp_path / "missing.csv.gz")
+    assert extract_outdated(tmp_path / "nope.parquet")

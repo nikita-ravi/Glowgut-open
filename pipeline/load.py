@@ -24,7 +24,7 @@ MAX_DB_MB = 450  # Supabase free tier is 500 MB; keep headroom (SPEC §2)
 COLUMNS = [
     "gtin", "name", "brand", "primary_category", "categories", "image_url", "ingredients_text",
     "nutrition", "nova_group", "labels", "is_organic", "additives_known", "source_by_field",
-    "completeness", "fetched_at",
+    "completeness", "fetched_at", "allergens", "traces", "ingredients_analysis",
 ]  # fmt: skip
 
 # (products row, additive codes or None, when the source last changed the product)

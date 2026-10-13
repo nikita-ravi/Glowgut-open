@@ -12,7 +12,8 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["src/**/*.{ts,tsx}"],
-      exclude: ["src/**/*.test.{ts,tsx}", "src/test/**"],
+      // Route pages and the layout are server components; Playwright (e2e/) covers them.
+      exclude: ["src/**/*.test.{ts,tsx}", "src/test/**", "src/app/**/page.tsx", "src/app/layout.tsx"],
       reporter: ["text-summary", "json-summary"],
       thresholds: { lines: 85, statements: 85, functions: 80, branches: 80 },
     },

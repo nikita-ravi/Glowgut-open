@@ -44,6 +44,10 @@ export interface Product {
   attribution: string;
   additives?: ProductAdditive[];
   source_by_field?: Record<string, string>;
+  allergens?: string[];
+  traces?: string[];
+  ingredients_analysis?: string[];
+  allergens_known?: boolean;
 }
 
 export interface Breakdown {
