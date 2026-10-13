@@ -16,7 +16,7 @@ Feature behaviour is defined in `specs/NNN-*.md` as numbered requirements (`**GT
 
 ## Hard rules (never break these)
 
-1. **Zero cost.** No paid APIs, no usage-billed services, no API keys that can incur charges. Don't add a dependency on any hosted service without asking first. Heavy compute goes in the browser or the offline pipeline, never the server.
+1. **Zero cost.** No paid APIs, no usage-billed services, no API keys that can incur charges. Don't add a dependency on any hosted service without asking first (approved: Groq's free tier for the assistant, spec 023). Heavy compute goes in the browser or the offline pipeline, never the server.
 2. **No LLM in the scoring path.** Scoring is a pure, deterministic Python module. The same inputs and `engine_version` always give the same score. Product explanations are rendered from templates over the score breakdown.
 3. **Licenses.** Don't copy code from AGPL/GPL projects (e.g. the Open Food Facts server, Piper TTS). Port logic from their docs and test against their outputs instead. Run the license check before adding a dependency. Open Food Facts data is ODbL: attribute it everywhere it's shown.
 4. **Health language.** Never write "toxic", "dangerous", or "unsafe" in user-facing copy. Say "limited evidence of X at typical intake", state regulatory status as fact, and show the "educational, not medical advice" footer.
@@ -35,6 +35,7 @@ Feature behaviour is defined in `specs/NNN-*.md` as numbered requirements (`**GT
 | OCR | Robotoff nutrition extraction API first, Tesseract.js fallback in the browser |
 | Auth | Better Auth |
 | Voice | Web Speech API: `SpeechRecognition` (opt-in, after a notice) and `speechSynthesis`. Not `kokoro-js`: its phonemizer bundles GPL-3.0 eSpeak NG |
+| Assistant | Groq free tier (`openai/gpt-oss-20b`) only turns a question into fixed fields; answers are templates over label data. Optional: keyword rules without `GROQ_API_KEY` |
 | Python tooling | `uv`, `pytest`, `ruff`, `mypy` |
 | JS tooling | `pnpm`, `eslint`, `vitest`, Playwright for e2e |
 | CI | GitHub Actions (tests + lint on PR; weekly data refresh cron) |

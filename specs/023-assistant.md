@@ -6,17 +6,18 @@ A separate "Assistant" page where someone taps a big microphone and asks about a
 their own words, e.g. "Hey, I'm diabetic. Can I eat Pringles?" It finds the product, checks the
 nutrients that matter for the person's condition, and answers on screen and out loud.
 
-**Demo version: no AI model.** Understanding is keyword rules, the product comes from our
-search (database only), and answers are templates over the product's label data. It's free,
-deterministic and fully testable. A production version may add an LLM to *phrase* answers
-from the same data (see "Later").
+**An LLM understands the question; it never writes the answer.** When a Groq key is set, a
+server route asks a small open-weight model to turn the question into fixed fields (product
+words, conditions, nutrients, topics). The product comes from our search, and answers are
+templates over its label data, so every number is traceable and the wording rules hold.
+Without a key, or when Groq fails, the keyword rules below do the same job.
 
 ## Understanding the question (`parseQuestion`)
 
 - **ASSIST-1** Conditions are recognised by keywords: diabetes ("diabetes", "diabetic", "blood
   sugar"), blood pressure ("blood pressure", "hypertension", "sodium"), heart ("heart",
   "cholesterol"), weight ("weight", "calories", "diet"), gluten ("gluten", "celiac",
-  "coeliac"), dairy ("lactose", "dairy", "milk allergy"), nuts ("nut allergy", "peanut
+  "coeliac"), teeth ("teeth", "tooth", "dental", "cavities"), dairy ("lactose", "dairy", "milk allergy"), nuts ("nut allergy", "peanut
   allergy", "nuts", "peanuts"), vegan and vegetarian. A question can name several.
 - **ASSIST-2** The product is whatever is left after removing filler, condition and question
   words ("hey assistant", "I'm a", "can I eat", "tell me about", …). With no product words,
@@ -39,7 +40,7 @@ from the same data (see "Later").
   - drinks: sugars low ≤ 2.5 g, high > 11.25 g; fat low ≤ 1.5 g, high > 8.75 g; saturated fat
     low ≤ 0.75 g, high > 2.5 g; salt low ≤ 0.3 g, high > 0.75 g.
 
-  Diabetes → sugars (and fibre if listed); blood pressure → salt; heart → saturated fat and
+  Diabetes → sugars (and fibre if listed); teeth → sugars; blood pressure → salt; heart → saturated fat and
   fat; weight → energy in kcal, sugars and fat. A missing nutrient is said to be missing.
 - **ASSIST-6** Allergy and diet conditions use the label's allergens, traces and vegan or
   vegetarian status (as in spec 018). Without label data, the answer says so and to check the
@@ -62,10 +63,39 @@ from the same data (see "Later").
 - **ASSIST-11** The page has no axe-detected WCAG 2.1 AA violations. The transcript is a polite
   live region, and the mic button's state is announced (`aria-pressed`, label).
 
+- **ASSIST-17** Allergen tags are sometimes missing from the data, so allergy answers also read
+  the ingredient text: peanuts and tree nuts (almond, cashew, hazelnut, walnut, pecan, pistachio,
+  macadamia), gluten (wheat, barley, rye, spelt) and milk (milk, lactose, whey, casein; not
+  coconut, almond, oat, soy or rice milk). A match says "The ingredients mention {word}." and is
+  never reported as "doesn't list". Nutrient values under 10 g show two decimals, so a value just
+  over a threshold never reads as equal to it.
+
+## Understanding with an LLM (Groq free tier)
+
+- **ASSIST-12** `POST /api/assistant/understand` (Next route, server-side) sends only the
+  question text (at most 300 characters; longer → 400) to Groq's OpenAI-compatible API with
+  `GROQ_API_KEY` and `GROQ_MODEL` (default `openai/gpt-oss-20b`), temperature 0, JSON output,
+  6-second timeout. No user ID, history or product data is sent. No key → 404; Groq error,
+  timeout or unusable output → 503. At most 20 questions a minute per client address (→ 429).
+- **ASSIST-13** The model's output is never trusted: conditions, topics and nutrients are kept
+  only if they're in the fixed lists, the product words are trimmed to 80 characters, and a
+  concern label is kept only as 1–40 letters, spaces or hyphens and without the hard-rule-4 words.
+  Anything else is dropped.
+- **ASSIST-14** A health concern outside the fixed conditions (e.g. "dental issues",
+  "pregnancy") is answered as "For {label}:" with the nutrients the model linked to it (sugars,
+  fat, saturated fat, salt, fibre, energy), or "I don't have specific label guidance for
+  {label}." when it linked none.
+- **ASSIST-15** The page uses the route first and falls back to `parseQuestion` on any failure,
+  so the assistant works without a key, offline from Groq, or rate-limited. A line under the text
+  box says questions are sent to Groq to understand them, and answers come from label data.
+- **ASSIST-16** When the model marks the product as a broad type ("chocolate", "chips"), the
+  assistant asks "Which {words} do you mean? For example: A, B or C." using the top three search
+  results, instead of picking one. With fewer than two results it answers as usual.
+
 ## Later (production, not built here)
 
-An LLM using tools over the same API (search, product, alternatives) to handle free-form and
-follow-up questions, writing answers only from the returned data, with the ASSIST-7 rules as
-system constraints and the template answer as a fallback. On-device speech recognition (e.g.
-Whisper in the browser) to avoid sending audio to Google. Both need a cost and privacy
-decision: hard rule 1 is $0/month.
+An LLM using tools over the same API (search, product, alternatives) to handle multi-turn
+conversations, still writing answers only from the returned data. On-device speech recognition (e.g.
+Whisper in the browser) to avoid sending audio to Google. Groq's free tier was chosen for the
+demo (no card, rate-limited); production needs a privacy review, since questions can be
+health-related.

@@ -122,3 +122,40 @@ describe("[ASSIST-10] speech in and out", () => {
     expect(conversation()).toHaveTextContent("Pringles Original.");
   });
 });
+
+describe("[ASSIST-15] [ASSIST-16] understanding with the LLM route", () => {
+  const llm = (parsed: object) => vi.fn(async () => ({ conditions: [], topics: [], productQuery: null, ...parsed }));
+
+  it("answers from the route's fields, including other concerns", async () => {
+    const understand = llm({ productQuery: "Pringles", concerns: [{ label: "dental issues", nutrients: ["sugars"] }] });
+    render(<Assistant search={found} fetchProduct={product} understand={understand} />);
+    await ask("I have dental issues, is Pringles ok");
+    expect(understand).toHaveBeenCalledWith("I have dental issues, is Pringles ok");
+    expect(found).toHaveBeenCalledWith("Pringles");
+    expect(conversation()).toHaveTextContent("For dental issues: Sugars: 1.5 g per 100 g, which is low");
+  });
+
+  it("asks which one for a broad product instead of picking", async () => {
+    const many = vi.fn(async (): Promise<SearchOutcome> => ({ kind: "ok", gtin: null, results: [
+      { gtin: "1", name: "Milk Chocolate", brand: "Hershey's", image_url: null, total: 20, band: null },
+      { gtin: "2", name: "Dark", brand: "Lindt", image_url: null, total: 30, band: null },
+    ] }));
+    render(<Assistant search={many} fetchProduct={product} understand={llm({ productQuery: "chocolate", generic: true })} />);
+    await ask("is chocolate ok for my teeth");
+    expect(conversation()).toHaveTextContent("Which chocolate do you mean? For example: Hershey's Milk Chocolate or Lindt Dark.");
+    expect(product).not.toHaveBeenCalled();
+  });
+
+  it("falls back to the keyword rules when the route fails", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(null, { status: 503 })));
+    render(<Assistant search={found} fetchProduct={product} />);
+    await ask("I'm diabetic, can I eat Pringles?");
+    expect(found).toHaveBeenCalledWith("pringles");
+    expect(conversation()).toHaveTextContent("For blood sugar:");
+  });
+
+  it("says where questions are sent", () => {
+    render(<Assistant search={found} fetchProduct={product} />);
+    expect(screen.getByText(/Questions are sent to Groq/)).toBeInTheDocument();
+  });
+});
