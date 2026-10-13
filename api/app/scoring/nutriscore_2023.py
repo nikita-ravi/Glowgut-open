@@ -55,7 +55,7 @@ def classify(
         return "water", is_red_meat
     if hit(c.beverage + c.water, c.beverage_exclude):  # flavoured/sweetened water is a beverage
         return "beverage", is_red_meat
-    if hit(c.cheese, []):
+    if hit(c.cheese, c.cheese_exclude):
         return "cheese", is_red_meat
     if hit(c.fats_oils_nuts_seeds, c.fats_oils_nuts_seeds_exclude):
         return "fats_oils_nuts_seeds", is_red_meat

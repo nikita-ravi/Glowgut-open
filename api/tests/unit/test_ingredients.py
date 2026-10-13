@@ -105,7 +105,7 @@ def test_engine_uses_estimates_only_for_missing_inputs_and_flags_them() -> None:
                          '("natural flavor").')  # fmt: skip
     assert "nova_group" not in result.missing_inputs and result.components["processing"]["known"]
     sentences = " ".join(explain(result))
-    assert "Estimated from the ingredient list" in sentences and "processing level" in sentences
+    assert "NOVA 4, estimated from the ingredient list" in sentences  # flagged once, not twice
 
 
 @spec("EST-6", "EST-7")

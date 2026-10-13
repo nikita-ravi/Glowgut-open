@@ -1,6 +1,6 @@
 # Scoring configuration. Any change above the "Not scoring" line must bump engine_version
 # and add a changelog line in specs/005-engine.md.
-engine_version: "0.4.0"
+engine_version: "0.4.1"
 
 weights:
   nutrition: 60
@@ -44,6 +44,10 @@ nutriscore:
       - en:beverage-preparations
     cheese:
       - en:cheeses
+    cheese_exclude: # OFF sometimes tags crisps and snacks as cheese; they're general foods
+      - en:crisps
+      - en:salty-snacks
+      - en:snacks
     fats_oils_nuts_seeds:
       - en:fats
       - en:vegetable-oils
@@ -248,3 +252,5 @@ changelog:
     change: "Found by the golden gate (spec 015): only spring and mineral waters are in the water class; olive, rapeseed and walnut oils count as 100% fruit/vegetables (NS-22)."
   - version: "0.4.0"
     change: "Balanced scoring, as in Yuka: nutrition by Nutri-Score grade (ENGINE-1) and a D/E cap at 49 (ENGINE-14). A typical E product drops about 18 points; A products don't change. Plain-language explanation (ENGINE-15)."
+  - version: "0.4.1"
+    change: "Crisps and snacks are never scored as cheese, even when Open Food Facts tags them so (NS-1)."

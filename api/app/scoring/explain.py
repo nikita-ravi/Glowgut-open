@@ -17,7 +17,7 @@ NUTRIENT_LABELS = {
     "energy_from_saturates": ("energy from saturated fat", "kJ"),
     "sugars": ("sugars", "g"),
     "saturated_fat": ("saturated fat", "g"),
-    "saturates_ratio": ("saturated fat (share of fat)", "%"),
+    "saturates_ratio": ("saturated fat", "% of its fat"),
     "salt": ("salt", "g"),
     "proteins": ("protein", "g"),
     "fiber": ("fibre", "g"),
@@ -46,7 +46,9 @@ def display_number(value: float, unit: str) -> str:
 def _fmt(value: object, unit: str) -> str:
     if isinstance(value, int | float) and not isinstance(value, bool):
         value = display_number(float(value), unit)
-    return f"{value} {unit}".strip() if unit != "%" else f"{value}%"
+    if unit.startswith("%"):
+        return f"{value}{unit}"
+    return f"{value} {unit}".strip()
 
 
 def _join(items: list[str]) -> str:
@@ -137,8 +139,7 @@ def explain(result: ScoreResult) -> list[str]:
 
     nutrition = [ln for ln in result.breakdown if ln.rule_id.startswith("nutriscore.")]
     estimated = sorted({_nutrient(ln)[0] for ln in nutrition if ln.estimated})
-    if any(ln.rule_id == "processing.nova" and ln.estimated for ln in result.breakdown):
-        estimated.append("processing level")  # EST-7
+    # An estimated processing level is already flagged in its own sentence (EST-7).
     if estimated:
         out.append(f"Estimated from the ingredient list: {', '.join(estimated)}.")
     if missing and result.status == "scored":

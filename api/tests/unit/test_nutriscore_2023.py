@@ -302,3 +302,10 @@ def test_olive_rapeseed_and_walnut_oils_count_as_100_percent_fvl() -> None:
     assert sunflower.score == 5
     fvl = next(ln for ln in olive.lines if ln.rule_id.endswith(".fvl"))
     assert fvl.input_value == 100.0 and fvl.note and not fvl.estimated
+
+
+@spec("NS-1")
+def test_crisps_tagged_as_cheese_are_general_foods() -> None:
+    tags = ("en:cheeses", "en:fermented-milk-products", "en:salty-snacks", "en:crisps")
+    assert ns.classify(tags, [], CFG)[0] == "general"
+    assert ns.classify(("en:cheeses",), [], CFG)[0] == "cheese"

@@ -25,6 +25,7 @@ class ClassTags(_Frozen):
     beverage: list[str]
     beverage_exclude: list[str]
     cheese: list[str]
+    cheese_exclude: list[str]
     fats_oils_nuts_seeds: list[str]
     fats_oils_nuts_seeds_exclude: list[str]
 

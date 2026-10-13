@@ -86,3 +86,4 @@ category tags, NOVA group, the additive list (or `None` if unknown), and
 | 0.2.0 | Missing fruit/vegetable share and NOVA group are estimated from the ingredient list (spec 014), flagged `estimated`. |
 | 0.3.0 | Found by the golden gate (spec 015): only spring and mineral waters are in the water class; olive, rapeseed and walnut oils count as 100% fruit/vegetables (NS-22). |
 | 0.4.0 | Balanced scoring, as in Yuka: nutrition by Nutri-Score grade (ENGINE-1) and a D/E cap at 49 (ENGINE-14). A typical E product drops about 18 points; A products don't change. Plain-language explanation (ENGINE-15). |
+| 0.4.1 | Crisps and snacks are never scored as cheese, even when Open Food Facts tags them so (NS-1). |
