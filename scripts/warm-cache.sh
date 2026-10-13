@@ -13,3 +13,14 @@ for c in "" /breakfast /yogurts /breads /snacks /bars /sweets /drinks /cheese /m
   curl -s -o /dev/null "$B/explore$c?limit=48"
 done
 curl -s -o /dev/null "$B/explore?per_category=4"; curl -s -o /dev/null "$B/methodology"
+
+# The assistant's searches (as the keyword parser writes them), and each top result.
+W=${WEB_URL:-http://localhost:3000}
+for q in pringles "pringles original" spam "spam classic" "reeses peanut butter cups" "reeses cups" cheerios \
+         chocolate "hersheys milk chocolate" "lays classic potato chips" "lays classic chips" oreo coke \
+         "coca cola" nutella "kind bar" "greek yogurt" "peanut butter" doritos; do
+  gtin=$(curl -s "$W/api/search?q=$(python3 -c 'import sys,urllib.parse;print(urllib.parse.quote(sys.argv[1]))' "$q")" \
+    | python3 -c 'import json,sys;d=json.load(sys.stdin);r=d.get("results") or [];print(d.get("gtin") or (r[0]["gtin"] if r else ""))')
+  [ -n "$gtin" ] && curl -s -o /dev/null "$B/products/$gtin"
+  echo "search \"$q\" -> ${gtin:-none}"
+done

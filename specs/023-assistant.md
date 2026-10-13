@@ -92,6 +92,12 @@ Without a key, or when Groq fails, the keyword rules below do the same job.
   assistant asks "Which {words} do you mean? For example: A, B or C." using the top three search
   results, instead of picking one. With fewer than two results it answers as usual.
 
+- **ASSIST-21** Speed and robustness: the keyword parser's product words are searched while the
+  model is still answering, and that search is reused when the model names the same product
+  (ignoring case). When the model names no product and there's no earlier product to follow up
+  on, the keyword parser's product words are used. A request for a recommendation ("which
+  chocolate should I eat?") still names the food, as a broad type (ASSIST-16).
+
 ## Speech to text with Whisper (Groq free tier)
 
 - **ASSIST-18** `POST /api/assistant/transcribe` (Next route, server-side) takes one recorded

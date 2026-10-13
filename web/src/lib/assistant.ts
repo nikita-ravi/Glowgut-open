@@ -36,7 +36,8 @@ const FILLER = new Set(
     "for of in on to this that these those any some product products food item there are be if and or " +
     "but so like just really still also know want check give info information details contain contains " +
     "containing free intolerant intolerance allergic type 1 2 one two kid kids child children son daughter " +
-    "safe alright issue issues problem problems condition trouble ok okay").split(" "),
+    "safe alright issue issues problem problems condition trouble ok okay which brand brands best recommend " +
+    "suggest").split(" "),
 );
 
 export type ConcernNutrient = "sugars" | "fat" | "saturated_fat" | "salt" | "fibre" | "energy";
@@ -100,7 +101,7 @@ export function parseQuestion(question: string): Parsed {
   const { keys: found, rest: afterConditions } = matchKeys(text, CONDITION_WORDS);
   const conditions = [...extra, ...found.filter((c) => !extra.includes(c))];
   const { keys: topics, rest } = matchKeys(afterConditions, TOPIC_WORDS);
-  const words = rest.trim().split(/\s+/).filter((w) => w && !FILLER.has(w));
+  const words = [...new Set(rest.trim().split(/\s+/).filter((w) => w && !FILLER.has(w)))];
   return { conditions, topics, productQuery: words.length ? words.join(" ") : null };
 }
 

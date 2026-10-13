@@ -221,3 +221,11 @@ describe("[ASSIST-17] allergens in the ingredient text, and precise numbers", ()
       .toMatch(/^Hershey's Milk Chocolate\./);
   });
 });
+
+describe("[ASSIST-21] recommendation questions name the food", () => {
+  it("drops which/brand/best words and repeats", () => {
+    expect(parseQuestion("I have a dental problem. Is chocolate okay? Which chocolate brand should I eat?")).toMatchObject({
+      conditions: ["teeth"], productQuery: "chocolate",
+    });
+  });
+});
