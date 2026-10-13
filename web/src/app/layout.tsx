@@ -38,9 +38,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
             <Link href="/" className="flex items-center gap-2.5 font-semibold tracking-tight">
               <span aria-hidden="true" className="grid h-8 w-8 place-items-center rounded-xl bg-emerald-700 text-sm font-bold text-white shadow-sm">
-                OF
+                GG
               </span>
-              <span>Open Food Scanner</span>
+              <span>GlowGut</span>
             </Link>
             <Suspense fallback={<HeaderTabsView path="" />}>
               <HeaderTabs />
