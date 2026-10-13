@@ -148,9 +148,12 @@ async def test_only_the_newest_scans_are_kept(
 async def test_delete_one_scan_or_all(client: httpx.AsyncClient) -> None:
     one = (await scan(client, ALICE)).json()["id"]
     await scan(client, ALICE, OTHER)
-    assert (await client.delete(f"/me/history/{one}", headers=auth(ALICE))).status_code == 204
-    assert (await client.delete(f"/me/history/{one}", headers=auth(ALICE))).status_code == 404
-    assert (await client.delete("/me/history", headers=auth(ALICE))).json() == {"deleted": 1}
+    deleted = await client.delete(f"/me/history/{one}", headers=auth(ALICE))
+    assert deleted.status_code == 204
+    deleted = await client.delete(f"/me/history/{one}", headers=auth(ALICE))
+    assert deleted.status_code == 404
+    deleted = await client.delete("/me/history", headers=auth(ALICE))
+    assert deleted.json() == {"deleted": 1}
 
 
 @spec("ACC-12")
@@ -160,7 +163,8 @@ async def test_favorites(client: httpx.AsyncClient) -> None:
         assert (await client.put(f"/me/favorites/{GTIN}", headers=auth(ALICE))).status_code == 204
     items = (await client.get("/me/favorites", headers=auth(ALICE))).json()["items"]
     assert [(i["gtin"], i["total"]) for i in items] == [(GTIN, 49)]
-    assert (await client.delete(f"/me/favorites/{GTIN}", headers=auth(ALICE))).status_code == 204
+    deleted = await client.delete(f"/me/favorites/{GTIN}", headers=auth(ALICE))
+    assert deleted.status_code == 204
     assert (await client.get("/me/favorites", headers=auth(ALICE))).json()["items"] == []
     missing = await client.put("/me/favorites/4006381333931", headers=auth(ALICE))
     assert missing.status_code == 404
@@ -175,7 +179,8 @@ async def test_users_cannot_see_or_touch_each_others_rows(
     await client.put(f"/me/favorites/{GTIN}", headers=auth(ALICE))
     assert (await client.get("/me/history", headers=auth(BOB))).json()["items"] == []
     assert (await client.get("/me/favorites", headers=auth(BOB))).json()["items"] == []
-    assert (await client.delete(f"/me/history/{alice_scan}", headers=auth(BOB))).status_code == 404
+    deleted = await client.delete(f"/me/history/{alice_scan}", headers=auth(BOB))
+    assert deleted.status_code == 404
     await client.delete("/me/history", headers=auth(BOB))
     assert len((await client.get("/me/history", headers=auth(ALICE))).json()["items"]) == 1
 
@@ -209,7 +214,9 @@ async def test_deleting_the_account_removes_everything_but_keeps_contributions_u
     await client.put("/me/preferences", json={"diets": ["vegan"]}, headers=auth(ALICE))
     await scan(client, BOB)
 
-    assert (await client.delete("/me", headers=auth(ALICE))).status_code == 204
+    deleted = await client.delete("/me", headers=auth(ALICE))
+
+    assert deleted.status_code == 204
     async with sessionmaker() as s:
         assert await s.scalar(text('SELECT count(*) FROM "user" WHERE id = :u'), {"u": ALICE}) == 0
         for table in ("scan_history", "favorites", "user_preferences"):
